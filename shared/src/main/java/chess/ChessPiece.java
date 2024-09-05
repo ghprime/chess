@@ -9,8 +9,12 @@ import java.util.Collection;
  * signature of the existing methods.
  */
 public class ChessPiece {
+    private final ChessGame.TeamColor color;
+    private final PieceType type;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        this.color=pieceColor;
+        this.type=type;
     }
 
     /**
@@ -29,14 +33,14 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        throw new RuntimeException("Not implemented");
+        return this.color;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        throw new RuntimeException("Not implemented");
+        return this.type;
     }
 
     /**
@@ -48,5 +52,30 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         throw new RuntimeException("Not implemented");
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj.getClass() != getClass()) return false;
+        var otherPiece=(ChessPiece) obj;
+        return otherPiece.getPieceType() == type && otherPiece.getTeamColor() == color;
+    }
+
+    @Override
+    public String toString() {
+        int offset=color == ChessGame.TeamColor.BLACK ? 0 : 32;
+        char letter='e';
+
+        switch (type) {
+            case ROOK -> letter='r';
+            case KNIGHT -> letter='n';
+            case BISHOP -> letter='b';
+            case KING -> letter='k';
+            case QUEEN -> letter='q';
+            case PAWN -> letter='p';
+        }
+
+        return String.valueOf((char) (letter - offset));
     }
 }

@@ -1,5 +1,7 @@
 package chess;
 
+import java.util.function.BiFunction;
+
 /**
  * A chessboard that can hold and rearrange chess pieces.
  * <p>
@@ -7,6 +9,7 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessBoard {
+    ChessPiece[][] board=new ChessPiece[8][8];
 
     public ChessBoard() {
         
@@ -18,8 +21,9 @@ public class ChessBoard {
      * @param position where to add the piece to
      * @param piece    the piece to add
      */
+
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        throw new RuntimeException("Not implemented");
+        board[position.getRow()][position.getColumn()]=piece;
     }
 
     /**
@@ -30,7 +34,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        throw new RuntimeException("Not implemented");
+        return board[position.getRow()][position.getColumn()];
     }
 
     /**
@@ -38,6 +42,57 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        throw new RuntimeException("Not implemented");
+        // PieceFactory
+        BiFunction<ChessGame.TeamColor, ChessPiece.PieceType, ChessPiece> pf=
+                ChessPiece::new;
+        var white=ChessGame.TeamColor.WHITE;
+        var black=ChessGame.TeamColor.BLACK;
+        var rook=ChessPiece.PieceType.ROOK;
+        var knight=ChessPiece.PieceType.KNIGHT;
+        var bishop=ChessPiece.PieceType.BISHOP;
+        var king=ChessPiece.PieceType.KING;
+        var queen=ChessPiece.PieceType.QUEEN;
+        var pawn=ChessPiece.PieceType.PAWN;
+
+        board=new ChessPiece[][]{
+                {pf.apply(white, rook), pf.apply(white, knight), pf.apply(white, bishop), pf.apply(white, king), pf.apply(white, queen), pf.apply(white, bishop), pf.apply(white, knight), pf.apply(white, rook)},
+                {pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn)},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn)},
+                {pf.apply(black, rook), pf.apply(black, knight), pf.apply(black, bishop), pf.apply(black, king), pf.apply(black, queen), pf.apply(black, bishop), pf.apply(black, knight), pf.apply(black, rook)},
+        };
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj.getClass() != getClass()) return false;
+        var otherBoard=(ChessBoard) obj;
+        for (int row=0; row < 8; ++row) {
+            for (int col=0; col < 8; ++col) {
+                var piece=board[row][col];
+                var otherPiece=otherBoard.board[row][col];
+                if (piece == null && otherPiece == null) continue;
+                if (piece == null) return false;
+                if (!piece.equals(otherPiece)) return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        var sb=new StringBuilder().append('|');
+        for (int row=0; row < 8; ++row) {
+            for (int col=0; col < 8; ++col) {
+                var piece=board[row][col];
+                sb.append(piece == null ? "." : piece).append('|');
+            }
+            if (row != 7) sb.append("\n|");
+        }
+        return sb.toString();
     }
 }
