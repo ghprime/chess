@@ -7,8 +7,14 @@ package chess;
  * signature of the existing methods.
  */
 public class ChessPosition {
+    private static final char[] fileNames=new char[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+    private static final char[] rankNames=new char[]{'1', '2', '3', '4', '5', '6', '7', '8'};
+    private final int row;
+    private final int column;
 
     public ChessPosition(int row, int col) {
+        this.column=col;
+        this.row=row;
     }
 
     /**
@@ -16,7 +22,7 @@ public class ChessPosition {
      * 1 codes for the bottom row
      */
     public int getRow() {
-        throw new RuntimeException("Not implemented");
+        return row;
     }
 
     /**
@@ -24,6 +30,24 @@ public class ChessPosition {
      * 1 codes for the left row
      */
     public int getColumn() {
-        throw new RuntimeException("Not implemented");
+        return column;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj.getClass() != getClass()) return false;
+        var otherPos=(ChessPosition) obj;
+        return row == otherPos.row && column == otherPos.column;
+    }
+
+    @Override
+    public int hashCode() {
+        return row + column + row * column;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + fileNames[column] + ',' + rankNames[row] + ')';
     }
 }
