@@ -17,7 +17,7 @@ public class ChessGame {
     ChessBoard board=new ChessBoard();
 
     public ChessGame() {
-
+        board.resetBoard();
     }
 
     /**
@@ -96,8 +96,8 @@ public class ChessGame {
     public boolean isInCheck(TeamColor teamColor) {
         var moves=new HashSet<ChessPosition>();
         ChessPosition kingPos=new ChessPosition(-1, -1);
-        for (int row=0; row < 8; ++row) {
-            for (int col=0; col < 8; ++col) {
+        for (int row=1; row < 9; ++row) {
+            for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
                 if (piece == null) continue;
@@ -106,7 +106,8 @@ public class ChessGame {
                 for (var move : piece.pieceMoves(board, pos)) moves.add(move.getEndPosition());
             }
         }
-        return moves.contains(kingPos);
+
+        return kingPos.getColumn() != -1 && moves.contains(kingPos);
     }
 
     /**
@@ -136,8 +137,8 @@ public class ChessGame {
     public boolean isInStalemate(TeamColor teamColor) {
         var kingsMoves=new HashSet<ChessMove>();
         var enemyMoves=new HashSet<ChessMove>();
-        for (int row=0; row < 8; ++row) {
-            for (int col=0; col < 8; ++col) {
+        for (int row=1; row < 9; ++row) {
+            for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
                 if (piece == null) continue;
@@ -171,8 +172,8 @@ public class ChessGame {
     }
 
     private void getAllMoves(Set<ChessMove> blackMoves, Set<ChessMove> whiteMoves) {
-        for (int row=0; row < 8; ++row) {
-            for (int col=0; col < 8; ++col) {
+        for (int row=1; row < 9; ++row) {
+            for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
                 if (piece == null) continue;
