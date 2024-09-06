@@ -29,7 +29,9 @@ public class MoveCalculator {
             case PAWN -> moveFunction=MoveCalculator::pawnMoves;
         }
 
-        if (moveFunction == null) return new HashSet<ChessMove>();
+        if (moveFunction == null) {
+            return new HashSet<ChessMove>();
+        }
 
         var moveManager=new MoveManager(board, piece, pos);
 
@@ -47,7 +49,9 @@ public class MoveCalculator {
         MoveChecker moveChecker=(int row, int col) -> {
             var newPos=moveManager.newPosition(row, col);
 
-            if (moveManager.isValidMove(newPos)) moves.add(moveManager.newMove(newPos));
+            if (moveManager.isValidMove(newPos)) {
+                moves.add(moveManager.newMove(newPos));
+            }
 
             // if there is a piece, then we need to tell it to break
             return moveManager.getPiece(newPos) != null;
