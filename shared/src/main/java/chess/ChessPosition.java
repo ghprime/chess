@@ -43,11 +43,11 @@ public class ChessPosition {
 
     @Override
     public int hashCode() {
-        return row + column + row * column;
+        return fileNames[column - 1] + (rankNames[row - 1] >> 4);
     }
 
     @Override
     public String toString() {
-        return "(" + fileNames[column] + ',' + rankNames[row] + ')';
+        return "(" + fileNames[column - 1] + ',' + rankNames[row - 1] + ')';
     }
 }

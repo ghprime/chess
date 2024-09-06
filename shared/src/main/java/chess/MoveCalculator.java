@@ -48,16 +48,16 @@ public class MoveCalculator {
             return moveManager.getPiece(newPos) != null;
         };
 
-        for (int row=pos.getRow() + 1; row < 8; ++row) {
+        for (int row=pos.getRow() + 1; row < 9; ++row) {
             if (moveChecker.checkMove(row, pos.getColumn())) break;
         }
-        for (int row=pos.getRow() - 1; row >= 0; --row) {
+        for (int row=pos.getRow() - 1; row > 0; --row) {
             if (moveChecker.checkMove(row, pos.getColumn())) break;
         }
-        for (int col=pos.getColumn() + 1; col < 8; ++col) {
+        for (int col=pos.getColumn() + 1; col < 9; ++col) {
             if (moveChecker.checkMove(pos.getRow(), col)) break;
         }
-        for (int col=pos.getColumn() - 1; col >= 0; --col) {
+        for (int col=pos.getColumn() - 1; col > 0; --col) {
             if (moveChecker.checkMove(pos.getRow(), col)) break;
         }
         return moves;
@@ -102,23 +102,23 @@ public class MoveCalculator {
             if (moveManager.isValidMove(newPos)) moves.add(moveManager.newMove(newPos));
 
             // if we hit a piece we need to break
-            return column <= 0 || column >= 7 || moveManager.getPiece(newPos) != null;
+            return column <= 1 || column >= 8 || moveManager.getPiece(newPos) != null;
         };
 
         var col=0;
-        for (int row=pos.getRow() + 1; row < 8; ++row) {
+        for (int row=pos.getRow() + 1; row < 9; ++row) {
             if (moveChecker.checkMove(row, pos.getColumn() + ++col)) break;
         }
         col=0;
-        for (int row=pos.getRow() - 1; row >= 0; --row) {
+        for (int row=pos.getRow() - 1; row > 0; --row) {
             if (moveChecker.checkMove(row, pos.getColumn() + ++col)) break;
         }
         col=0;
-        for (int row=pos.getRow() + 1; row < 8; ++row) {
+        for (int row=pos.getRow() + 1; row < 9; ++row) {
             if (moveChecker.checkMove(row, pos.getColumn() - ++col)) break;
         }
         col=0;
-        for (int row=pos.getRow() - 1; row >= 0; --row) {
+        for (int row=pos.getRow() - 1; row > 0; --row) {
             if (moveChecker.checkMove(row, pos.getColumn() - ++col)) break;
         }
 
@@ -154,10 +154,10 @@ public class MoveCalculator {
 
         if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
             toMove=1;
-            notMovedRow=1;
+            notMovedRow=2;
         } else {
             toMove=-1;
-            notMovedRow=6;
+            notMovedRow=7;
         }
 
         var forward=moveManager.newPosition(pos.getRow() + toMove, pos.getColumn());
@@ -166,7 +166,7 @@ public class MoveCalculator {
         // if it can move directly forward
         if (canMoveForward) {
             // if directly forward would move to promotion row
-            if (forward.getRow() == 0 || forward.getRow() == 7) {
+            if (forward.getRow() == 1 || forward.getRow() == 8) {
                 for (int i=0; i < 4; ++i) moves.add(moveManager.newMove(forward, promotions[i]));
             }
             // if move is normal move
@@ -184,12 +184,12 @@ public class MoveCalculator {
         var left=moveManager.newPosition(pos.getRow() + toMove, pos.getColumn() - 1);
         var right=moveManager.newPosition(pos.getRow() + toMove, pos.getColumn() + 1);
         if (moveManager.isValidMove(left, TakeStatus.MUST_TAKE)) {
-            if (left.getRow() == 0 || left.getRow() == 7) {
+            if (left.getRow() == 1 || left.getRow() == 8) {
                 for (int i=0; i < 4; ++i) moves.add(moveManager.newMove(left, promotions[i]));
             } else moves.add(moveManager.newMove(left));
         }
         if (moveManager.isValidMove(right, TakeStatus.MUST_TAKE)) {
-            if (right.getRow() == 0 || right.getRow() == 7) {
+            if (right.getRow() == 1 || right.getRow() == 8) {
                 for (int i=0; i < 4; ++i) moves.add(moveManager.newMove(right, promotions[i]));
             } else moves.add(moveManager.newMove(right));
         }
@@ -232,7 +232,7 @@ public class MoveCalculator {
         }
 
         public boolean isValidMove(ChessPosition newPos, TakeStatus status) {
-            if (newPos.getColumn() > 7 || newPos.getColumn() < 0 || newPos.getRow() > 7 || newPos.getRow() < 0) return false;
+            if (newPos.getColumn() > 8 || newPos.getColumn() < 1 || newPos.getRow() > 8 || newPos.getRow() < 1) return false;
             var toMove=board.getPiece(newPos);
             if (status == TakeStatus.MUST_TAKE && toMove == null) return false;
             if (status == TakeStatus.CANT_TAKE && toMove != null) return false;

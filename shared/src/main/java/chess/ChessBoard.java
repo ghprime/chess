@@ -23,7 +23,7 @@ public class ChessBoard {
      */
 
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        board[position.getRow()][position.getColumn()]=piece;
+        board[8 - position.getRow()][position.getColumn() - 1]=piece;
     }
 
     /**
@@ -34,7 +34,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return board[position.getRow()][position.getColumn()];
+        return board[8 - position.getRow()][position.getColumn() - 1];
     }
 
     /**
@@ -55,14 +55,14 @@ public class ChessBoard {
         var pawn=ChessPiece.PieceType.PAWN;
 
         board=new ChessPiece[][]{
-                {pf.apply(white, rook), pf.apply(white, knight), pf.apply(white, bishop), pf.apply(white, king), pf.apply(white, queen), pf.apply(white, bishop), pf.apply(white, knight), pf.apply(white, rook)},
-                {pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn)},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
+                {pf.apply(black, rook), pf.apply(black, knight), pf.apply(black, bishop), pf.apply(black, queen), pf.apply(black, king), pf.apply(black, bishop), pf.apply(black, knight), pf.apply(black, rook)},
                 {pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn)},
-                {pf.apply(black, rook), pf.apply(black, knight), pf.apply(black, bishop), pf.apply(black, king), pf.apply(black, queen), pf.apply(black, bishop), pf.apply(black, knight), pf.apply(black, rook)},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn)},
+                {pf.apply(white, rook), pf.apply(white, knight), pf.apply(white, bishop), pf.apply(white, queen), pf.apply(white, king), pf.apply(white, bishop), pf.apply(white, knight), pf.apply(white, rook)},
         };
     }
 
