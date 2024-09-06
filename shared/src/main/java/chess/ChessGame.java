@@ -16,6 +16,13 @@ public class ChessGame {
     TeamColor currentTeamTurn=TeamColor.WHITE;
     ChessBoard board=new ChessBoard();
 
+    public static ChessGame deserialize(String serializedGame, TeamColor currentTeamTurn) {
+        var game=new ChessGame();
+        game.setTeamTurn(currentTeamTurn);
+        game.setBoard(ChessBoard.deserialize(serializedGame));
+        return game;
+    }
+
     public ChessGame() {
         board.resetBoard();
     }
@@ -216,5 +223,9 @@ public class ChessGame {
     @Override
     public String toString() {
         return board.toString();
+    }
+
+    public String serialize() {
+        return board.serialize();
     }
 }

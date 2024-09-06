@@ -95,4 +95,26 @@ public class ChessBoard {
         }
         return sb.toString();
     }
+
+    public static ChessBoard deserialize(String serializedGame) {
+        ChessBoard board=new ChessBoard();
+        for (int x=0; x < 8; ++x) {
+            for (int y=0; y < 8; ++y) {
+                var piece=ChessPiece.deserialize(serializedGame.charAt(x * 8 + y));
+                board.addPiece(new ChessPosition(x, y), piece);
+            }
+        }
+        return board;
+    }
+
+    public String serialize() {
+        var sb=new StringBuilder();
+        for (int row=0; row < 8; ++row) {
+            for (int col=0; col < 8; ++col) {
+                var piece=board[row][col];
+                sb.append(piece == null ? "." : piece);
+            }
+        }
+        return sb.toString();
+    }
 }

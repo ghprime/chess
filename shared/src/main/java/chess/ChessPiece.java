@@ -17,6 +17,28 @@ public class ChessPiece {
         this.type=type;
     }
 
+    public static ChessPiece deserialize(char piece) {
+        ChessPiece newPiece;
+
+        switch (piece) {
+            case 'r' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.ROOK);
+            case 'n' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KNIGHT);
+            case 'b' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.BISHOP);
+            case 'k' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KING);
+            case 'q' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.QUEEN);
+            case 'p' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.PAWN);
+            case 'R' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.ROOK);
+            case 'N' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KNIGHT);
+            case 'B' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.BISHOP);
+            case 'K' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KING);
+            case 'Q' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.QUEEN);
+            case 'P' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.PAWN);
+            default -> newPiece=null;
+        }
+
+        return newPiece;
+    }
+
     /**
      * The various different chess piece options
      */
