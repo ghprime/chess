@@ -17,17 +17,12 @@ import static java.sql.Types.NULL;
 
 public class MySqlDAO implements DatabaseAccess {
   private static MySqlDAO instance;
-  // private final Database database=new Database();
-  private final MySqlDataAccessConfig config;
   /**
    * Statements to create database and tables if they don't already exist
    */
   private final String[] createStatements={
           """
-          create database if not exists %DB_NAME%;
-          """,
-          """
-          create table if not exists %DB_NAME%.games (
+          create table if not exists games (
             id int not null auto_increment,
             name varchar(256) not null,
             game char(64) not null,
@@ -38,7 +33,7 @@ public class MySqlDAO implements DatabaseAccess {
           );
           """,
           """
-          create table if not exists %DB_NAME%.users (
+          create table if not exists users (
             username varchar(256) not null unique,
             password varchar(256) not null,
             email varchar(256) not null,
@@ -46,7 +41,7 @@ public class MySqlDAO implements DatabaseAccess {
           );
           """,
           """
-          create table if not exists %DB_NAME%.authTokens (
+          create table if not exists authTokens (
             username varchar(256) not null,
             authToken char(36) not null,
             primary key (authToken),
@@ -67,12 +62,6 @@ public class MySqlDAO implements DatabaseAccess {
   );
 
   public MySqlDAO() throws DataAccessException {
-    config=new MySqlDataAccessConfig("jdbc:mysql://localhost:3306", "root", "monkey123", "chess");
-    start();
-  }
-
-  MySqlDAO(MySqlDataAccessConfig config) throws DataAccessException {
-    this.config=config;
     start();
   }
 
@@ -94,9 +83,10 @@ public class MySqlDAO implements DatabaseAccess {
    * Called to start the database with the config supplied
    */
   private void start() throws DataAccessException {
+    DatabaseManager.createDatabase();
+
     try (var conn=getConnection()) {
       for (var statement : createStatements) {
-        statement=setDb(statement);
         try (var preparedStatement=conn.prepareStatement(statement)) {
           preparedStatement.executeUpdate();
         }
@@ -112,8 +102,7 @@ public class MySqlDAO implements DatabaseAccess {
    * @return new connection
    */
   private Connection getConnection() throws DataAccessException {
-    // return database.getConnection();
-    throw new DataAccessException("Cannot get connection");
+    return DatabaseManager.getConnection();
   }
 
   /**
@@ -193,7 +182,7 @@ public class MySqlDAO implements DatabaseAccess {
    */
   private AuthToken authenticatedUser(AuthToken authToken) throws DataAccessException {
     try (var conn=getConnection()) {
-      var statement=setDb("select username from %DB_NAME%.authTokens where authToken=?;");
+      var statement="select username from authTokens where authToken=?;";
       Adapter<AuthToken> tokenAdapter=rs -> new AuthToken(authToken.authToken(), rs.getString(1));
       var results=executeQuery(statement, tokenAdapter, authToken.authToken());
       return results.isEmpty() ? null : results.getFirst();
@@ -206,7 +195,7 @@ public class MySqlDAO implements DatabaseAccess {
   public void clear() throws DataAccessException {
     var tables=new String[]{"games", "users", "authTokens"};
     for (var table : tables) {
-      var statement=setDb("truncate %DB_NAME%." + table);
+      var statement="truncate " + table;
       executeUpdate(statement);
     }
   }
@@ -220,7 +209,7 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("bad request");
     }
 
-    var statement=setDb("insert into %DB_NAME%.users values(?,?,?)");
+    var statement="insert into users values(?,?,?)";
     try {
       executeUpdate(statement, newUser.username(), newUser.password(), newUser.email());
     } catch (DataAccessException ex) {
@@ -240,7 +229,7 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("bad request");
     }
 
-    var getUserStatement=setDb("select (username) from %DB_NAME%.users where username=? and password=?;");
+    var getUserStatement="select (username) from users where username=? and password=?;";
     Adapter<AuthToken> userAdapter=rs -> new AuthToken(rs.getString(1));
 
     var results=executeQuery(getUserStatement, userAdapter, user.username(), user.password());
@@ -250,7 +239,7 @@ public class MySqlDAO implements DatabaseAccess {
 
     var authToken=results.getFirst();
 
-    var insertAuthTokenStatement=setDb("insert into %DB_NAME%.authTokens values(?,?)");
+    var insertAuthTokenStatement="insert into authTokens values(?,?)";
     executeUpdate(insertAuthTokenStatement, authToken.username(), authToken.authToken());
     return authToken;
   }
@@ -261,7 +250,7 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("unauthorized");
     }
 
-    var statement=setDb("delete from %DB_NAME%.authTokens where authToken=?;");
+    var statement="delete from authTokens where authToken=?;";
 
     var tuple=executeUpdate(statement, authToken.authToken());
     if (tuple.numAffectedRows() == 0) {
@@ -279,7 +268,7 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("unauthorized");
     }
 
-    var statement=setDb("select * from %DB_NAME%.games;");
+    var statement="select * from games;";
 
     return executeQuery(statement, gameAdapter);
   }
@@ -298,7 +287,7 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("unauthorized");
     }
 
-    var statement=setDb("insert into %DB_NAME%.games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);");
+    var statement="insert into games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);";
 
     var gameToInsert=new ChessGame();
     gameToInsert.getBoard().resetBoard();
@@ -325,7 +314,7 @@ public class MySqlDAO implements DatabaseAccess {
 
     var username=authToken.username();
 
-    var statement=setDb("select * from %DB_NAME%.games where id=?;");
+    var statement="select * from games where id=?;";
     var results=executeQuery(statement, gameAdapter, game.gameID());
 
     if (results.isEmpty()) {
@@ -353,7 +342,7 @@ public class MySqlDAO implements DatabaseAccess {
       whiteUsername=username;
     }
 
-    var updateStatement=setDb("update %DB_NAME%.games set whitePlayer = ?, blackPlayer = ? where id = ?;");
+    var updateStatement="update games set whitePlayer = ?, blackPlayer = ? where id = ?;";
 
     executeUpdate(updateStatement, whiteUsername, blackUsername, game.gameID());
   }
@@ -380,13 +369,13 @@ public class MySqlDAO implements DatabaseAccess {
     }
     var gameID=game.gameID();
 
-    var statement=setDb("select * from %DB_NAME%.games where id=?;");
+    var statement="select * from games where id=?;";
     var results=executeQuery(statement, gameAdapter, gameID);
     if (results.isEmpty()) {
       throw new DataAccessException("No game");
     }
 
-    var statement1=setDb("update %DB_NAME%.games set game = ?, currentTurn = ? where id = ?;");
+    var statement1="update games set game = ?, currentTurn = ? where id = ?;";
     var trueGame=(ChessGame) game.game();
     var currentTurn=trueGame.getTeamTurn() == ChessGame.TeamColor.WHITE ? 0 : 1;
     executeUpdate(statement1, trueGame.serialize(), currentTurn, game.gameID());
@@ -403,21 +392,12 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("unauthorized");
     }
 
-    var statement=setDb("select * from %DB_NAME%.games where id=?;");
+    var statement="select * from games where id=?;";
     var results=executeQuery(statement, gameAdapter, gameID);
     if (results.isEmpty()) {
       throw new DataAccessException("No game");
     }
     return results.getFirst();
-  }
-
-  /**
-   * Set the database in the statement
-   *
-   * @param statement statement to set the database name
-   */
-  private String setDb(String statement) {
-    return statement.replace("%DB_NAME%", config.dbName());
   }
 
   private interface Adapter<T> {
