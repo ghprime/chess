@@ -17,7 +17,9 @@ public class MemoryDAO implements DatabaseAccess {
   HashMap<String, AuthToken> authTokens=new HashMap<>();
 
   public static DatabaseAccess getInstance() throws DataAccessException {
-    if (instance == null) instance=new MemoryDAO();
+    if (instance == null) {
+      instance=new MemoryDAO();
+    }
     return instance;
   }
 
@@ -30,12 +32,17 @@ public class MemoryDAO implements DatabaseAccess {
 
   @Override
   public AuthToken insertUser(User newUser) throws DataAccessException {
-    if (newUser == null) throw new DataAccessException("bad request");
-
-    if (newUser.password() == null || newUser.username() == null || newUser.email() == null)
+    if (newUser == null) {
       throw new DataAccessException("bad request");
+    }
+
+    if (newUser.password() == null || newUser.username() == null || newUser.email() == null) {
+      throw new DataAccessException("bad request");
+    }
     var userToInsert=users.get(newUser.username());
-    if (userToInsert != null) throw new DataAccessException("already taken");
+    if (userToInsert != null) {
+      throw new DataAccessException("already taken");
+    }
 
     users.put(newUser.username(), newUser);
 
@@ -44,11 +51,17 @@ public class MemoryDAO implements DatabaseAccess {
 
   @Override
   public AuthToken loginUser(User user) throws DataAccessException {
-    if (user == null) throw new DataAccessException("bad request");
+    if (user == null) {
+      throw new DataAccessException("bad request");
+    }
 
     var userToLogin=users.get(user.username());
-    if (userToLogin == null) throw new DataAccessException("unauthorized");
-    if (!userToLogin.password().equals(user.password())) throw new DataAccessException("unauthorized");
+    if (userToLogin == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (!userToLogin.password().equals(user.password())) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var authToken=new AuthToken(userToLogin.username());
 
@@ -59,29 +72,43 @@ public class MemoryDAO implements DatabaseAccess {
 
   @Override
   public void logoutUser(AuthToken authToken) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var verifiedAuthToken=authTokens.get(authToken.authToken());
-    if (verifiedAuthToken == null) throw new DataAccessException("unauthorized");
+    if (verifiedAuthToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     authTokens.remove(verifiedAuthToken.authToken());
   }
 
   @Override
   public List<Game> listGames(AuthToken authToken) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var verifiedAuthToken=authTokens.get(authToken.authToken());
-    if (verifiedAuthToken == null) throw new DataAccessException("unauthorized");
+    if (verifiedAuthToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     return new ArrayList<>(games.values());
   }
 
   @Override
   public Game createGame(AuthToken authToken, Game game) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
-    if (game == null) throw new DataAccessException("bad request");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (game == null) {
+      throw new DataAccessException("bad request");
+    }
 
     var verifiedAuthToken=authTokens.get(authToken.authToken());
-    if (verifiedAuthToken == null) throw new DataAccessException("unauthorized");
+    if (verifiedAuthToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     var newGame=new Game(++gameID, game.whiteUsername(), game.blackUsername(), game.gameName(), new ChessGame());
     games.put(gameID, newGame);
     return newGame;
@@ -89,40 +116,60 @@ public class MemoryDAO implements DatabaseAccess {
 
   @Override
   public void joinGame(AuthToken authToken, Game game) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
-    if (game == null) throw new DataAccessException("bad request");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (game == null) {
+      throw new DataAccessException("bad request");
+    }
 
     var verifiedAuthToken=authTokens.get(authToken.authToken());
-    if (verifiedAuthToken == null) throw new DataAccessException("unauthorized");
+    if (verifiedAuthToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
 
     var username=verifiedAuthToken.username();
 
     var gameToJoin=games.get(game.gameID());
 
-    if (gameToJoin == null) throw new DataAccessException("bad request");
+    if (gameToJoin == null) {
+      throw new DataAccessException("bad request");
+    }
 
     if (game.blackUsername() == null && game.whiteUsername() == null) {
       return;
     }
 
-    var whiteUsername=gameToJoin.whiteUsername();
-    var blackUsername=gameToJoin.blackUsername();
-    var nullUserToReplace=game.blackUsername() != null ? blackUsername : whiteUsername;
-
-    if (nullUserToReplace != null) throw new DataAccessException("already taken");
-
-    if (game.whiteUsername() == null) blackUsername=username;
-    else whiteUsername=username;
-
-    var newGame=new Game(game.gameID(), whiteUsername, blackUsername, gameToJoin.gameName(), gameToJoin.game());
+    var newGame = getGame(game, gameToJoin, username);
 
     games.put(game.gameID(), newGame);
   }
 
+  private static Game getGame(Game game, Game gameToJoin, String username) throws DataAccessException {
+    var whiteUsername= gameToJoin.whiteUsername();
+    var blackUsername= gameToJoin.blackUsername();
+    var nullUserToReplace= game.blackUsername() != null ? blackUsername : whiteUsername;
+
+    if (nullUserToReplace != null) {
+      throw new DataAccessException("already taken");
+    }
+
+    if (game.whiteUsername() == null) {
+      blackUsername= username;
+    }
+    else {
+      whiteUsername= username;
+    }
+
+    return new Game(game.gameID(), whiteUsername, blackUsername, gameToJoin.gameName(), gameToJoin.game());
+  }
+
   @Override
   public AuthToken verifyAuthToken(AuthToken authToken) throws DataAccessException {
-    if (!authTokens.containsKey(authToken.authToken())) return null;
+    if (!authTokens.containsKey(authToken.authToken())) {
+      return null;
+    }
     return authTokens.get(authToken.authToken());
   }
 

@@ -52,10 +52,16 @@ public class ChessMove {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj.getClass() != getClass()) return false;
+        if (obj == null) {
+            return false;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
         var otherMove=(ChessMove) obj;
-        if (otherMove.promotionType != promotionType) return false;
+        if (otherMove.promotionType != promotionType) {
+            return false;
+        }
         return startPos.equals(otherMove.startPos) && endPos.equals(otherMove.endPos);
     }
 
@@ -68,7 +74,9 @@ public class ChessMove {
     public String toString() {
         var sb=new StringBuilder();
         sb.append(startPos).append("->").append(endPos);
-        if (promotionType != null) sb.append(" (").append(promotionType).append(')');
+        if (promotionType != null) {
+            sb.append(" (").append(promotionType).append(')');
+        }
         return sb.toString();
     }
 }

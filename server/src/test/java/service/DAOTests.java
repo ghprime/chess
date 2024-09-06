@@ -221,7 +221,12 @@ class DAOTests {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    assertDoesNotThrow(() -> dao.joinGame(authToken, new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    assertDoesNotThrow(
+      () -> dao.joinGame(
+        authToken,
+        new Game(game.gameID(), null, user.username(), game.gameName(), null)
+      )
+    );
   }
 
   @ParameterizedTest
@@ -235,7 +240,12 @@ class DAOTests {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    var err=assertThrows(DataAccessException.class, () -> dao.joinGame(authToken, new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    var err=assertThrows(DataAccessException.class,
+      () -> dao.joinGame(
+        authToken,
+        new Game(game.gameID(), null, user.username(), game.gameName(), null)
+      )
+    );
 
     assertEquals("already taken", err.getMessage());
   }
@@ -251,7 +261,13 @@ class DAOTests {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    var err=assertThrows(DataAccessException.class, () -> dao.joinGame(new AuthToken(user.username()), new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    var err=assertThrows(DataAccessException.class,
+      () -> dao.joinGame(
+        new AuthToken(
+          user.username()),
+          new Game(game.gameID(), null, user.username(), game.gameName(), null)
+      )
+    );
 
     assertEquals("unauthorized", err.getMessage());
   }
@@ -263,11 +279,22 @@ class DAOTests {
 
     var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
 
-    var gameToInsert=new Game(1234, "black", "white", "gameName", null);
+    var gameToInsert=new Game(
+            1234,
+            "black",
+            "white",
+            "gameName",
+            null
+    );
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    var err=assertThrows(DataAccessException.class, () -> dao.joinGame(authToken, new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    var err=assertThrows(DataAccessException.class,
+      () -> dao.joinGame(
+        authToken,
+        new Game(game.gameID(), null, user.username(), game.gameName(), null)
+      )
+    );
 
     assertEquals("already taken", err.getMessage());
   }
@@ -283,7 +310,12 @@ class DAOTests {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    var err=assertThrows(DataAccessException.class, () -> dao.joinGame(authToken, new Game(game.gameID() + 1, null, user.username(), game.gameName(), null)));
+    var err=assertThrows(DataAccessException.class,
+      () -> dao.joinGame(
+        authToken,
+        new Game(game.gameID() + 1, null, user.username(), game.gameName(), null)
+      )
+    );
 
     assertEquals("bad request", err.getMessage());
   }
@@ -299,6 +331,11 @@ class DAOTests {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    assertDoesNotThrow(() -> dao.joinGame(authToken, new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    assertDoesNotThrow(
+      () -> dao.joinGame(
+        authToken,
+        new Game(game.gameID(), null, user.username(), game.gameName(), null)
+      )
+    );
   }
 }

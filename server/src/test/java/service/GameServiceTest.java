@@ -94,7 +94,9 @@ class GameServiceTest {
 
     var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
 
-    var err=assertThrows(DataAccessException.class, () -> gameService.joinGame(new AuthToken(user.username()), new Game(game.gameID(), null, user.username(), game.gameName(), null)));
+    var err=assertThrows(DataAccessException.class,
+      () -> gameService.joinGame(new AuthToken(user.username()), new Game(game.gameID(), null, user.username(), game.gameName(), null))
+    );
 
     assertEquals("unauthorized", err.getMessage());
   }

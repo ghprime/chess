@@ -15,13 +15,7 @@ class AuthServiceTest {
 
   @BeforeEach
   void prepTest() {
-    try {
-      dao=MemoryDAO.getInstance();
-      var testingService=new TestingService(dao);
-      testingService.clear();
-    } catch (Exception err) {
-      System.out.println("Error: " + err.getMessage());
-    }
+    dao = PrepareTest.prepareTest();
   }
 
   @Test

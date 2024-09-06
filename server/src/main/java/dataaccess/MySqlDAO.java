@@ -6,6 +6,7 @@ import models.Game;
 import models.User;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -76,7 +77,9 @@ public class MySqlDAO implements DatabaseAccess {
   }
 
   public static MySqlDAO getInstance() {
-    if (instance != null) return instance;
+    if (instance != null) {
+      return instance;
+    }
 
     try {
       instance=new MySqlDAO();
@@ -125,29 +128,36 @@ public class MySqlDAO implements DatabaseAccess {
   private <T> ArrayList<T> executeQuery(String statement, Adapter<T> adapter, Object... params) throws DataAccessException {
     try (var conn=getConnection()) {
       try (var ps=conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-        for (var i=0; i < params.length; i++) {
-          var param=params[i];
+        insertParametersIntoPreparedStatement(ps, params);
 
-          switch (param) {
-              case String s -> ps.setString(i + 1, s);
-              case Integer integer -> ps.setInt(i + 1, integer);
-              case null -> ps.setNull(i + 1, NULL);
-              default -> {
-              }
-          }
-        }
-
-        var results=new ArrayList<T>();
-        try (var rs=ps.executeQuery()) {
-          while (rs.next()) {
-            results.add(adapter.getClass(rs));
-          }
-        }
-
-        return results;
+        return getResultsFromQuery(ps, adapter);
       }
     } catch (SQLException e) {
       throw new DataAccessException(e.getMessage());
+    }
+  }
+
+  private <T> ArrayList<T> getResultsFromQuery(PreparedStatement ps, Adapter<T> adapter) throws SQLException {
+    var results=new ArrayList<T>();
+    try (var rs=ps.executeQuery()) {
+      while (rs.next()) {
+        results.add(adapter.getClass(rs));
+      }
+    }
+    return results;
+  }
+
+  private void insertParametersIntoPreparedStatement(PreparedStatement ps, Object... params) throws SQLException {
+    for (var i=0; i < params.length; i++) {
+      var param=params[i];
+
+      switch (param) {
+        case String s -> ps.setString(i + 1, s);
+        case Integer integer -> ps.setInt(i + 1, integer);
+        case null -> ps.setNull(i + 1, NULL);
+        default -> {
+        }
+      }
     }
   }
 
@@ -161,21 +171,13 @@ public class MySqlDAO implements DatabaseAccess {
   private Tuple executeUpdate(String statement, Object... params) throws DataAccessException {
     try (var conn=getConnection()) {
       try (var ps=conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-        for (var i=0; i < params.length; i++) {
-          var param=params[i];
-
-          switch (param) {
-              case String s -> ps.setString(i + 1, s);
-              case Integer integer -> ps.setInt(i + 1, integer);
-              case null -> ps.setNull(i + 1, NULL);
-              default -> {
-              }
-          }
-        }
+        insertParametersIntoPreparedStatement(ps, params);
         var numAffectedRows=ps.executeUpdate();
         var generatedID=0;
         var rs=ps.getGeneratedKeys();
-        if (rs.next()) generatedID=rs.getInt(1);
+        if (rs.next()) {
+          generatedID=rs.getInt(1);
+        }
         return new Tuple(numAffectedRows, generatedID);
       }
     } catch (SQLException e) {
@@ -211,16 +213,21 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public AuthToken insertUser(User newUser) throws DataAccessException {
-    if (newUser == null) throw new DataAccessException("bad request");
-    if (newUser.password() == null || newUser.username() == null || newUser.email() == null)
+    if (newUser == null) {
       throw new DataAccessException("bad request");
+    }
+    if (newUser.password() == null || newUser.username() == null || newUser.email() == null) {
+      throw new DataAccessException("bad request");
+    }
 
     var statement=setDb("insert into %DB_NAME%.users values(?,?,?)");
     try {
       executeUpdate(statement, newUser.username(), newUser.password(), newUser.email());
     } catch (DataAccessException ex) {
       var isDuplicate=ex.getMessage().equals("Duplicate entry '" + newUser.username() + "' for key 'users.PRIMARY'");
-      if (isDuplicate) throw new DataAccessException("already taken");
+      if (isDuplicate) {
+        throw new DataAccessException("already taken");
+      }
       throw ex;
     }
 
@@ -229,13 +236,17 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public AuthToken loginUser(User user) throws DataAccessException {
-    if (user == null) throw new DataAccessException("bad request");
+    if (user == null) {
+      throw new DataAccessException("bad request");
+    }
 
     var getUserStatement=setDb("select (username) from %DB_NAME%.users where username=? and password=?;");
     Adapter<AuthToken> userAdapter=rs -> new AuthToken(rs.getString(1));
 
     var results=executeQuery(getUserStatement, userAdapter, user.username(), user.password());
-    if (results.isEmpty()) throw new DataAccessException("unauthorized");
+    if (results.isEmpty()) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var authToken=results.getFirst();
 
@@ -246,19 +257,27 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public void logoutUser(AuthToken authToken) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var statement=setDb("delete from %DB_NAME%.authTokens where authToken=?;");
 
     var tuple=executeUpdate(statement, authToken.authToken());
-    if (tuple.numAffectedRows() == 0) throw new DataAccessException("unauthorized");
+    if (tuple.numAffectedRows() == 0) {
+      throw new DataAccessException("unauthorized");
+    }
   }
 
   @Override
   public List<Game> listGames(AuthToken authToken) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     authToken=authenticatedUser(authToken);
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var statement=setDb("select * from %DB_NAME%.games;");
 
@@ -267,11 +286,17 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public Game createGame(AuthToken authToken, Game game) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
-    if (game == null) throw new DataAccessException("bad request");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (game == null) {
+      throw new DataAccessException("bad request");
+    }
 
     authToken=authenticatedUser(authToken);
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var statement=setDb("insert into %DB_NAME%.games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);");
 
@@ -285,19 +310,27 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public void joinGame(AuthToken authToken, Game game) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
-    if (game == null) throw new DataAccessException("bad request");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (game == null) {
+      throw new DataAccessException("bad request");
+    }
 
     authToken=authenticatedUser(authToken);
 
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var username=authToken.username();
 
     var statement=setDb("select * from %DB_NAME%.games where id=?;");
     var results=executeQuery(statement, gameAdapter, game.gameID());
 
-    if (results.isEmpty()) throw new DataAccessException("bad request");
+    if (results.isEmpty()) {
+      throw new DataAccessException("bad request");
+    }
 
     var gameToJoin=results.getFirst();
 
@@ -309,10 +342,16 @@ public class MySqlDAO implements DatabaseAccess {
     var blackUsername=gameToJoin.blackUsername();
     var nullUserToReplace=game.blackUsername() != null ? blackUsername : whiteUsername;
 
-    if (nullUserToReplace != null && !nullUserToReplace.isEmpty()) throw new DataAccessException("already taken");
+    if (nullUserToReplace != null && !nullUserToReplace.isEmpty()) {
+      throw new DataAccessException("already taken");
+    }
 
-    if (game.whiteUsername() == null || game.whiteUsername().isEmpty()) blackUsername=username;
-    else whiteUsername=username;
+    if (game.whiteUsername() == null || game.whiteUsername().isEmpty()) {
+      blackUsername=username;
+    }
+    else {
+      whiteUsername=username;
+    }
 
     var updateStatement=setDb("update %DB_NAME%.games set whitePlayer = ?, blackPlayer = ? where id = ?;");
 
@@ -321,21 +360,31 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public AuthToken verifyAuthToken(AuthToken authToken) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     return authenticatedUser(authToken);
   }
 
   @Override
   public void updateGame(AuthToken authToken, Game game) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
-    if (game == null) throw new DataAccessException("bad request");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
+    if (game == null) {
+      throw new DataAccessException("bad request");
+    }
     authToken=authenticatedUser(authToken);
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     var gameID=game.gameID();
 
     var statement=setDb("select * from %DB_NAME%.games where id=?;");
     var results=executeQuery(statement, gameAdapter, gameID);
-    if (results.isEmpty()) throw new DataAccessException("No game");
+    if (results.isEmpty()) {
+      throw new DataAccessException("No game");
+    }
 
     var statement1=setDb("update %DB_NAME%.games set game = ?, currentTurn = ? where id = ?;");
     var trueGame=(ChessGame) game.game();
@@ -345,14 +394,20 @@ public class MySqlDAO implements DatabaseAccess {
 
   @Override
   public Game getGame(AuthToken authToken, int gameID) throws DataAccessException {
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
     authToken=authenticatedUser(authToken);
 
-    if (authToken == null) throw new DataAccessException("unauthorized");
+    if (authToken == null) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var statement=setDb("select * from %DB_NAME%.games where id=?;");
     var results=executeQuery(statement, gameAdapter, gameID);
-    if (results.isEmpty()) throw new DataAccessException("No game");
+    if (results.isEmpty()) {
+      throw new DataAccessException("No game");
+    }
     return results.getFirst();
   }
 

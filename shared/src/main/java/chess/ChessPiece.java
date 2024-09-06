@@ -18,25 +18,21 @@ public class ChessPiece {
     }
 
     public static ChessPiece deserialize(char piece) {
-        ChessPiece newPiece;
-
-        switch (piece) {
-            case 'r' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.ROOK);
-            case 'n' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KNIGHT);
-            case 'b' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.BISHOP);
-            case 'k' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KING);
-            case 'q' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.QUEEN);
-            case 'p' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.PAWN);
-            case 'R' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.ROOK);
-            case 'N' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KNIGHT);
-            case 'B' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.BISHOP);
-            case 'K' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KING);
-            case 'Q' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.QUEEN);
-            case 'P' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.PAWN);
-            default -> newPiece=null;
-        }
-
-        return newPiece;
+        return switch (piece) {
+            case 'r' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.ROOK);
+            case 'n' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KNIGHT);
+            case 'b' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.BISHOP);
+            case 'k' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KING);
+            case 'q' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.QUEEN);
+            case 'p' -> new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.PAWN);
+            case 'R' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.ROOK);
+            case 'N' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KNIGHT);
+            case 'B' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.BISHOP);
+            case 'K' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KING);
+            case 'Q' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.QUEEN);
+            case 'P' -> new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.PAWN);
+            default -> null;
+        };
     }
 
     /**
@@ -78,8 +74,12 @@ public class ChessPiece {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj.getClass() != getClass()) return false;
+        if (obj == null) {
+            return false;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
         var otherPiece=(ChessPiece) obj;
         return otherPiece.getPieceType() == type && otherPiece.getTeamColor() == color;
     }

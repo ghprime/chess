@@ -55,29 +55,75 @@ public class ChessBoard {
         var pawn=ChessPiece.PieceType.PAWN;
 
         board=new ChessPiece[][]{
-                {pf.apply(black, rook), pf.apply(black, knight), pf.apply(black, bishop), pf.apply(black, queen), pf.apply(black, king), pf.apply(black, bishop), pf.apply(black, knight), pf.apply(black, rook)},
-                {pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn), pf.apply(black, pawn)},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null},
-                {pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn), pf.apply(white, pawn)},
-                {pf.apply(white, rook), pf.apply(white, knight), pf.apply(white, bishop), pf.apply(white, queen), pf.apply(white, king), pf.apply(white, bishop), pf.apply(white, knight), pf.apply(white, rook)},
+            {
+                pf.apply(black, rook),
+                pf.apply(black, knight),
+                pf.apply(black, bishop),
+                pf.apply(black, queen),
+                pf.apply(black, king),
+                pf.apply(black, bishop),
+                pf.apply(black, knight),
+                pf.apply(black, rook)
+            },
+            {
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn),
+                pf.apply(black, pawn)
+            },
+            {null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null},
+            {null, null, null, null, null, null, null, null},
+            {
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn),
+                pf.apply(white, pawn)
+            },
+            {
+                pf.apply(white, rook),
+                pf.apply(white, knight),
+                pf.apply(white, bishop),
+                pf.apply(white, queen),
+                pf.apply(white, king),
+                pf.apply(white, bishop),
+                pf.apply(white, knight),
+                pf.apply(white, rook)
+            },
         };
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj.getClass() != getClass()) return false;
+        if (obj == null) {
+            return false;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
         var otherBoard=(ChessBoard) obj;
         for (int row=0; row < 8; ++row) {
             for (int col=0; col < 8; ++col) {
                 var piece=board[row][col];
                 var otherPiece=otherBoard.board[row][col];
-                if (piece == null && otherPiece == null) continue;
-                if (piece == null) return false;
-                if (!piece.equals(otherPiece)) return false;
+                if (piece == null && otherPiece == null) {
+                    continue;
+                }
+                if (piece == null) {
+                    return false;
+                }
+                if (!piece.equals(otherPiece)) {
+                    return false;
+                }
             }
         }
         return true;
@@ -91,7 +137,9 @@ public class ChessBoard {
                 var piece=board[row][col];
                 sb.append(piece == null ? "." : piece).append('|');
             }
-            if (row != 7) sb.append("\n|");
+            if (row != 7) {
+                sb.append("\n|");
+            }
         }
         return sb.toString();
     }
@@ -101,7 +149,7 @@ public class ChessBoard {
         for (int x=0; x < 8; ++x) {
             for (int y=0; y < 8; ++y) {
                 var piece=ChessPiece.deserialize(serializedGame.charAt(x * 8 + y));
-                board.addPiece(new ChessPosition(x, y), piece);
+                board.addPiece(new ChessPosition(x + 1, y + 1), piece);
             }
         }
         return board;

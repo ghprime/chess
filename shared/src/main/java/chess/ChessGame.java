@@ -60,7 +60,9 @@ public class ChessGame {
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
         var piece=board.getPiece(startPosition);
-        if (piece == null) return Collections.emptyList();
+        if (piece == null) {
+            return Collections.emptyList();
+        }
 
         return piece.pieceMoves(board, startPosition).stream().filter(move -> !moveCausesCheck(move)).collect(Collectors.toSet());
     }
@@ -73,21 +75,43 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         var pieceToMove=board.getPiece(move.getStartPosition());
-        if (pieceToMove == null) throw new InvalidMoveException("Not a valid piece to move!");
-        if (pieceToMove.getTeamColor() != currentTeamTurn) throw new InvalidMoveException("Not correct team color!");
+
+        if (pieceToMove == null) {
+            throw new InvalidMoveException("Not a valid piece to move!");
+        }
+
+        if (pieceToMove.getTeamColor() != currentTeamTurn) {
+            throw new InvalidMoveException("Not correct team color!");
+        }
+
         var placeToMove=board.getPiece(move.getEndPosition());
-        if (placeToMove != null && pieceToMove.getTeamColor() == placeToMove.getTeamColor())
+
+        if (placeToMove != null && pieceToMove.getTeamColor() == placeToMove.getTeamColor()) {
             throw new InvalidMoveException("Cannot capture friendly pieces!");
+        }
+
         var allMoves=pieceToMove.pieceMoves(board, move.getStartPosition());
-        if (!allMoves.contains(move)) throw new InvalidMoveException("Not a valid move!");
+
+        if (!allMoves.contains(move)) {
+            throw new InvalidMoveException("Not a valid move!");
+        }
+
         board.addPiece(move.getStartPosition(), null);
-        if (move.getPromotionPiece() == null) board.addPiece(move.getEndPosition(), pieceToMove);
-        else
+        if (move.getPromotionPiece() == null) {
+            board.addPiece(move.getEndPosition(), pieceToMove);
+        }
+
+        else {
             board.addPiece(move.getEndPosition(), new ChessPiece(pieceToMove.getTeamColor(), move.getPromotionPiece()));
+        }
+
         if (isInCheck(currentTeamTurn)) {
-            if (placeToMove == null) board.addPiece(move.getEndPosition(), null);
-            else
+            if (placeToMove == null) {
+                board.addPiece(move.getEndPosition(), null);
+            }
+            else {
                 board.addPiece(move.getEndPosition(), new ChessPiece(pieceToMove.getTeamColor(), placeToMove.getPieceType()));
+            }
             board.addPiece(move.getStartPosition(), new ChessPiece(pieceToMove.getTeamColor(), pieceToMove.getPieceType()));
             throw new InvalidMoveException("Move would result in check!");
         }
@@ -107,10 +131,18 @@ public class ChessGame {
             for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
-                if (piece == null) continue;
-                if (piece.getTeamColor() == teamColor && piece.getPieceType() == ChessPiece.PieceType.KING) kingPos=pos;
-                if (piece.getTeamColor() == teamColor) continue;
-                for (var move : piece.pieceMoves(board, pos)) moves.add(move.getEndPosition());
+                if (piece == null) {
+                    continue;
+                }
+                if (piece.getTeamColor() == teamColor && piece.getPieceType() == ChessPiece.PieceType.KING) {
+                    kingPos=pos;
+                }
+                if (piece.getTeamColor() == teamColor) {
+                    continue;
+                }
+                for (var move : piece.pieceMoves(board, pos)) {
+                    moves.add(move.getEndPosition());
+                }
             }
         }
 
@@ -129,7 +161,9 @@ public class ChessGame {
         getAllMoves(blackMoves, whiteMoves);
         var moves=teamColor == TeamColor.BLACK ? blackMoves : whiteMoves;
         for (var move : moves) {
-            if (!moveCausesCheck(move)) return false;
+            if (!moveCausesCheck(move)) {
+                return false;
+            }
         }
         return true;
     }
@@ -148,10 +182,16 @@ public class ChessGame {
             for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
-                if (piece == null) continue;
+                if (piece == null) {
+                    continue;
+                }
                 if (piece.getTeamColor() == teamColor) {
-                    if (piece.getPieceType() == ChessPiece.PieceType.KING) kingsMoves.addAll(piece.pieceMoves(board, pos));
-                    else if (!piece.pieceMoves(board, pos).isEmpty()) return false;
+                    if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                        kingsMoves.addAll(piece.pieceMoves(board, pos));
+                    }
+                    else if (!piece.pieceMoves(board, pos).isEmpty()) {
+                        return false;
+                    }
                 } else {
                     enemyMoves.addAll(piece.pieceMoves(board, pos));
                 }
@@ -183,9 +223,15 @@ public class ChessGame {
             for (int col=1; col < 9; ++col) {
                 var pos=new ChessPosition(row, col);
                 var piece=board.getPiece(pos);
-                if (piece == null) continue;
-                if (piece.getTeamColor() == TeamColor.BLACK) blackMoves.addAll(piece.pieceMoves(board, pos));
-                else whiteMoves.addAll(piece.pieceMoves(board, pos));
+                if (piece == null) {
+                    continue;
+                }
+                if (piece.getTeamColor() == TeamColor.BLACK) {
+                    blackMoves.addAll(piece.pieceMoves(board, pos));
+                }
+                else {
+                    whiteMoves.addAll(piece.pieceMoves(board, pos));
+                }
             }
         }
     }
@@ -214,8 +260,12 @@ public class ChessGame {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (obj.getClass() != getClass()) return false;
+        if (obj == null) {
+            return false;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
         var otherGame=(ChessGame) obj;
         return board.equals(otherGame.board);
     }
