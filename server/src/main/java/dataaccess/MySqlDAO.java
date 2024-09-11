@@ -4,6 +4,7 @@ import chess.ChessGame;
 import models.AuthToken;
 import models.Game;
 import models.User;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -65,7 +66,7 @@ public class MySqlDAO implements DatabaseAccess {
     start();
   }
 
-  public static MySqlDAO getInstance() {
+  public static MySqlDAO getInstance() throws DataAccessException {
     if (instance != null) {
       return instance;
     }
@@ -73,7 +74,7 @@ public class MySqlDAO implements DatabaseAccess {
     try {
       instance=new MySqlDAO();
     } catch (Exception ex) {
-      System.out.println(ex.getMessage());
+      throw new DataAccessException(ex.getMessage());
     }
 
     return instance;
@@ -200,6 +201,14 @@ public class MySqlDAO implements DatabaseAccess {
     }
   }
 
+  private String encryptPassword(String password) {
+    return BCrypt.hashpw(password, BCrypt.gensalt());
+  }
+
+  private boolean verifyPassword(String password, String encryptedPassword) {
+    return BCrypt.checkpw(password, encryptedPassword);
+  }
+
   @Override
   public AuthToken insertUser(User newUser) throws DataAccessException {
     if (newUser == null) {
@@ -211,7 +220,7 @@ public class MySqlDAO implements DatabaseAccess {
 
     var statement="insert into users values(?,?,?)";
     try {
-      executeUpdate(statement, newUser.username(), newUser.password(), newUser.email());
+      executeUpdate(statement, newUser.username(), encryptPassword(newUser.password()), newUser.email());
     } catch (DataAccessException ex) {
       var isDuplicate=ex.getMessage().equals("Duplicate entry '" + newUser.username() + "' for key 'users.PRIMARY'");
       if (isDuplicate) {
@@ -229,15 +238,40 @@ public class MySqlDAO implements DatabaseAccess {
       throw new DataAccessException("bad request");
     }
 
-    var getUserStatement="select (username) from users where username=? and password=?;";
-    Adapter<AuthToken> userAdapter=rs -> new AuthToken(rs.getString(1));
+    class Tuple<X, Y> {
+      private final X x;
+      private final Y y;
+      public Tuple(X x, Y y) {
+        this.x = x;
+        this.y = y;
+      }
 
-    var results=executeQuery(getUserStatement, userAdapter, user.username(), user.password());
+      public X getX() {
+        return x;
+      }
+
+      public Y getY() {
+        return y;
+      }
+    }
+
+    var getUserStatement="select username, password from users where username=?;";
+    Adapter<Tuple<AuthToken, String>> userAdapter=rs -> new Tuple<>(
+      new AuthToken(rs.getString(1)), rs.getString(2)
+    );
+
+    var results=executeQuery(getUserStatement, userAdapter, user.username());
     if (results.isEmpty()) {
       throw new DataAccessException("unauthorized");
     }
 
-    var authToken=results.getFirst();
+    var tuple=results.getFirst();
+    var authToken=tuple.getX();
+    var password=tuple.getY();
+
+    if (!verifyPassword(user.password(), password)) {
+      throw new DataAccessException("unauthorized");
+    }
 
     var insertAuthTokenStatement="insert into authTokens values(?,?)";
     executeUpdate(insertAuthTokenStatement, authToken.username(), authToken.authToken());

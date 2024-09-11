@@ -11,7 +11,7 @@ import java.util.List;
 public class GameService {
   DatabaseAccess dao;
 
-  public GameService() {
+  public GameService() throws DataAccessException {
     this.dao=MySqlDAO.getInstance();
   }
 

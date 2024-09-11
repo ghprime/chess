@@ -51,8 +51,5 @@ public class ChessPositionTests {
         Assertions.assertFalse(set.contains(different));
         set.add(different);
         Assertions.assertEquals(2, set.size());
-
-
     }
-
 }

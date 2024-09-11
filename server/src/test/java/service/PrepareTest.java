@@ -1,12 +1,12 @@
 package service;
 
 import dataaccess.DatabaseAccess;
-import dataaccess.MemoryDAO;
+import dataaccess.MySqlDAO;
 
 public class PrepareTest {
     public static DatabaseAccess prepareTest() {
         try {
-            var dao= MemoryDAO.getInstance();
+            var dao= MySqlDAO.getInstance();
             var testingService=new TestingService(dao);
             testingService.clear();
             return dao;

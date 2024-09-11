@@ -23,7 +23,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
         try {
-            dao=MemoryDAO.getInstance();
+            dao=MySqlDAO.getInstance();
 
             authService=new AuthService(dao);
             userService=new UserService(dao);
