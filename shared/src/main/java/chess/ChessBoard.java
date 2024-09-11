@@ -157,7 +157,7 @@ public class ChessBoard {
 
     public String serialize() {
         var sb=new StringBuilder();
-        for (int row=0; row < 8; ++row) {
+        for (int row=7; row > -1; --row) {
             for (int col=0; col < 8; ++col) {
                 var piece=board[row][col];
                 sb.append(piece == null ? "." : piece);

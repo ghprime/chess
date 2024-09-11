@@ -1,9 +1,5 @@
-package service;
+package dataaccess;
 
-import dataaccess.DataAccessException;
-import dataaccess.DatabaseAccess;
-import dataaccess.MemoryDAO;
-import dataaccess.MySqlDAO;
 import models.AuthToken;
 import models.Game;
 import models.User;
@@ -33,7 +29,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void clear(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -41,7 +37,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void insertUserSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -49,7 +45,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void insertUserAlreadyExists(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -61,7 +57,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void insertUserBadRequest(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -73,7 +69,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void loginUserSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -85,7 +81,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void loginUserNoSuchUser(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -95,7 +91,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void loginUserUnauthorized(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -109,7 +105,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void logoutUserSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -118,7 +114,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void logoutUserUnauthorized(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -130,7 +126,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void listGamesSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -155,7 +151,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void listGamesUnauthorized(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -173,7 +169,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void createGameSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -185,7 +181,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void createGameSuccessWithTwoGamesSameName(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -199,7 +195,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void createGameUnauthorized(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -211,7 +207,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameSuccess(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -230,7 +226,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameCantBeAlreadySelectedPlayer(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -251,7 +247,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameUnauthorized(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -273,7 +269,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameCantJoinFullGame(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -300,7 +296,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameCantJoinGameThatDoesNotExist(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
@@ -321,7 +317,7 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class})
+  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
   void joinGameObserver(Class<DatabaseAccess> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
