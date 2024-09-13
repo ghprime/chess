@@ -175,7 +175,7 @@ public class ChessClient {
     var board=currentGame.getBoard();
     board.resetBoard();
 
-    return "Successfully joined game!";
+    return "Successfully joined game!\n" + redraw();
   }
 
   private String observeGame(String... params) throws ClientException {
@@ -193,7 +193,7 @@ public class ChessClient {
 
     gameID=gameIDs.get(id);
 
-    server.joinGame(authToken, gameID, null);
+    server.joinGame(authToken, gameID, "OBSERVER");
 
     state=State.OBSERVING;
 
@@ -201,7 +201,7 @@ public class ChessClient {
     var board=currentGame.getBoard();
     board.resetBoard();
 
-    return "Successfully joined game!";
+    return "Successfully joined game!\n" + redraw();
   }
 
   private String resign() throws ClientException {
@@ -307,7 +307,7 @@ public class ChessClient {
   private String displayBoard(ChessBoard board, ChessGame.TeamColor perspective, ChessPosition pieceMovesToHighlight) {
     var order=new int[]{0, 1, 2, 3, 4, 5, 6, 7};
 
-    if (perspective == ChessGame.TeamColor.WHITE) {
+    if (perspective != ChessGame.TeamColor.BLACK) {
       for (int index=0; index < order.length / 2; ++index) {
         var temp=order[index];
         order[index]=order[7 - index];
@@ -384,7 +384,7 @@ public class ChessClient {
 
       ChessPosition pos;
 
-      if (perspective == ChessGame.TeamColor.WHITE) {
+      if (perspective != ChessGame.TeamColor.BLACK) {
         pos=new ChessPosition(8 - (y - 1), x);
       }
       else {

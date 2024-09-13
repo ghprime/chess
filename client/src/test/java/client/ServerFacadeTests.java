@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class ServerFacadeTests {
-
     private static Server server;
 
     private static ServerFacade facade=new ServerFacade();
@@ -148,4 +147,10 @@ public class ServerFacadeTests {
         assertEquals("Error: already taken", ex.getMessage());
     }
 
+    @Test
+    void observeGame() {
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
+        assertDoesNotThrow(() -> facade.joinGame(authToken, game.gameID(), "OBSERVER"));
+    }
 }

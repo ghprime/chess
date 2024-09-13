@@ -22,7 +22,7 @@ public class Repl {
       String line=scanner.nextLine();
 
       if (line.isEmpty()) {
-        line="clear;register user pass email;create game;list;join 1 WHITE;redraw";
+        line="clear;register user pass email;create game;list";
       }
 
       var inputs=line.split(";");

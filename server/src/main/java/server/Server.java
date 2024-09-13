@@ -131,7 +131,8 @@ public class Server {
             var playerColor=(String) body.get("playerColor");
             var white="WHITE".equals(playerColor) ? playerColor : null;
             var black="BLACK".equals(playerColor) ? playerColor : null;
-            if (white == null && black == null) {
+            var isObserver="OBSERVER".equals(playerColor);
+            if (white == null && black == null && !isObserver) {
                 return databaseErrorHandler(new DataAccessException("Must specify color"), req, res);
             }
             var game=new Game(gameID, white, black, null, null);

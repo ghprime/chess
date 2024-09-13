@@ -53,6 +53,9 @@ public class ServerFacade {
 
   public List<Game> listGames(AuthToken authToken) throws ClientException {
     var games=makeRequest("GET", "game", null, GamesList.class, authToken);
+    if (games == null) {
+      return new ArrayList<>();
+    }
     return games.games().stream().map(GameInfo::toGame).toList();
   }
 
@@ -64,7 +67,7 @@ public class ServerFacade {
     makeRequest("PUT", "game", new JoinGameRequest(gameID, playerColor), null, authToken);
   }
 
-  public <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, AuthToken authToken) throws ClientException {
+  private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, AuthToken authToken) throws ClientException {
     try {
       var connection=getConnection(path);
       connection.setRequestMethod(method);
@@ -119,7 +122,7 @@ public class ServerFacade {
   }
 
 
-  public <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
+  private <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
     try {
       InputStream responseBody;
       try {
