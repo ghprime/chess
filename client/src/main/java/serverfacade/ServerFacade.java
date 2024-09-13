@@ -1,4 +1,4 @@
-package serverFacade;
+package serverfacade;
 
 import com.google.gson.Gson;
 import models.AuthToken;

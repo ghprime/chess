@@ -4,7 +4,7 @@ import models.AuthToken;
 import models.User;
 import org.junit.jupiter.api.*;
 import server.Server;
-import serverFacade.ServerFacade;
+import serverfacade.ServerFacade;
 import ui.ClientException;
 
 import static org.junit.jupiter.api.Assertions.*;

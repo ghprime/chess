@@ -3,7 +3,7 @@ package ui;
 import chess.*;
 import models.AuthToken;
 import models.User;
-import serverFacade.ServerFacade;
+import serverfacade.ServerFacade;
 
 import java.util.*;
 
