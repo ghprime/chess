@@ -72,6 +72,17 @@ public class ChessPiece {
         return MoveCalculator.getMoves(board, myPosition, board.getPiece(myPosition));
     }
 
+    public char getPieceChar() {
+        return switch (type) {
+            case ROOK -> 'R';
+            case KNIGHT -> 'N';
+            case BISHOP -> 'B';
+            case KING -> 'K';
+            case QUEEN -> 'Q';
+            case PAWN -> 'P';
+        };
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
