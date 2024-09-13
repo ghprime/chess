@@ -69,16 +69,22 @@ public class ServerFacade {
       var connection=getConnection(path);
       connection.setRequestMethod(method);
       connection.setReadTimeout(5000);
-      if (authToken != null) connection.addRequestProperty("Authorization", authToken.authToken());
+      if (authToken != null) {
+        connection.addRequestProperty("Authorization", authToken.authToken());
+      }
 
-      if (request != null) sendData(request, connection);
+      if (request != null) {
+        sendData(request, connection);
+      }
 
       if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
         var response=readData(connection, ErrorResponse.class);
         throw new ClientException(connection.getResponseCode(), response.message());
       }
 
-      if (responseClass == null) return null;
+      if (responseClass == null) {
+        return null;
+      }
 
       return readData(connection, responseClass);
     } catch (IOException ex) {

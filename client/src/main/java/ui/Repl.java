@@ -21,7 +21,9 @@ public class Repl {
       printPrompt();
       String line=scanner.nextLine();
 
-      if (line.isEmpty()) line="clear;register user pass email;create game;list;join 1 WHITE;redraw";
+      if (line.isEmpty()) {
+        line="clear;register user pass email;create game;list;join 1 WHITE;redraw";
+      }
 
       var inputs=line.split(";");
 
@@ -49,10 +51,5 @@ public class Repl {
     };
     var fullStatus=color + "[" + status + "]";
     System.out.print("\n" + RESET + fullStatus + RESET + " >>> " + SET_TEXT_COLOR_BLUE);
-  }
-
-  public void notify(String message) {
-    System.out.println(RESET + "\n" + SET_TEXT_COLOR_YELLOW + message + RESET);
-    printPrompt();
   }
 }

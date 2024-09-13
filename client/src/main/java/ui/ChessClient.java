@@ -34,7 +34,9 @@ public class ChessClient {
   public String eval(String input) throws ClientException {
     var inputs=input.split("\\s+");
 
-    if (inputs[0].isEmpty()) return "";
+    if (inputs[0].isEmpty()) {
+      return "";
+    }
 
     var params=Arrays.copyOfRange(inputs, 1, inputs.length);
 
@@ -68,7 +70,9 @@ public class ChessClient {
   }
 
   private String register(String... params) throws ClientException {
-    if (params.length != 3) throw new ClientException(400, "Expected: <username> <password> <email>");
+    if (params.length != 3) {
+      throw new ClientException(400, "Expected: <username> <password> <email>");
+    }
 
     authToken=server.registerUser(new User(params[0], params[1], params[2]));
     state=State.SIGNED_IN;
@@ -76,7 +80,9 @@ public class ChessClient {
   }
 
   private String login(String... params) throws ClientException {
-    if (params.length != 2) throw new ClientException(400, "Expected: <username> <password>");
+    if (params.length != 2) {
+      throw new ClientException(400, "Expected: <username> <password>");
+    }
 
     authToken=server.login(new User(params[0], params[1]));
     state=State.SIGNED_IN;
@@ -96,7 +102,9 @@ public class ChessClient {
     var games=server.listGames(authToken);
     gameIDs.clear();
 
-    if (games.isEmpty()) return "No games.";
+    if (games.isEmpty()) {
+      return "No games.";
+    }
 
     var sb=new StringBuilder();
 
@@ -107,13 +115,23 @@ public class ChessClient {
       sb.append(") Name: '");
       sb.append(game.gameName());
       sb.append("'; White player: ");
-      if (game.whiteUsername() != null) sb.append("'").append(game.whiteUsername()).append("'");
-      else sb.append("Empty");
+      if (game.whiteUsername() != null) {
+        sb.append("'").append(game.whiteUsername()).append("'");
+      }
+      else {
+        sb.append("Empty");
+      }
       sb.append("; Black player: ");
-      if (game.blackUsername() != null) sb.append("'").append(game.blackUsername()).append("'");
-      else sb.append("Empty");
+      if (game.blackUsername() != null) {
+        sb.append("'").append(game.blackUsername()).append("'");
+      }
+      else {
+        sb.append("Empty");
+      }
       sb.append(";");
-      if (index != games.size()) sb.append("\n");
+      if (index != games.size()) {
+        sb.append("\n");
+      }
       gameIDs.put(index, game.gameID());
     }
 
@@ -128,7 +146,9 @@ public class ChessClient {
   private String createGame(String... params) throws ClientException {
     assertSignedIn();
 
-    if (params.length == 0) throw new ClientException(400, "Expected: create <gameName>");
+    if (params.length == 0) {
+      throw new ClientException(400, "Expected: create <gameName>");
+    }
 
     server.createGame(authToken, params[0]);
     return "Successfully created game!";
@@ -137,11 +157,15 @@ public class ChessClient {
   private String joinGame(String... params) throws ClientException {
     assertSignedIn();
 
-    if (params.length != 2) throw new ClientException(400, "Expected: <gameID> <BLACK/WHITE>");
+    if (params.length != 2) {
+      throw new ClientException(400, "Expected: <gameID> <BLACK/WHITE>");
+    }
 
     var id=Integer.parseInt(params[0]);
 
-    if (!gameIDs.containsKey(id)) throw new ClientException(400, "No such game!");
+    if (!gameIDs.containsKey(id)) {
+      throw new ClientException(400, "No such game!");
+    }
 
     gameID=gameIDs.get(id);
 
@@ -160,11 +184,15 @@ public class ChessClient {
   private String observeGame(String... params) throws ClientException {
     assertSignedIn();
 
-    if (params.length != 1) throw new ClientException(400, "Expected: <gameID>");
+    if (params.length != 1) {
+      throw new ClientException(400, "Expected: <gameID>");
+    }
 
     var id=Integer.parseInt(params[0]);
 
-    if (!gameIDs.containsKey(id)) throw new ClientException(400, "No such game!");
+    if (!gameIDs.containsKey(id)) {
+      throw new ClientException(400, "No such game!");
+    }
 
     gameID=gameIDs.get(id);
 
@@ -202,12 +230,16 @@ public class ChessClient {
   private String move(String... params) throws ClientException {
     assertInGame();
 
-    if (params.length != 2) throw new ClientException(400, "Expected: <file><rank> <file><rank>");
+    if (params.length != 2) {
+      throw new ClientException(400, "Expected: <file><rank> <file><rank>");
+    }
 
     var from=params[0].toLowerCase();
     var to=params[1].toLowerCase();
 
-    if (from.length() != 2 || to.length() != 2) throw new ClientException(400, "Expected: <file><rank> <file><rank>");
+    if (from.length() != 2 || to.length() != 2) {
+      throw new ClientException(400, "Expected: <file><rank> <file><rank>");
+    }
 
     var positions=new ChessPosition[]{null, null};
 
@@ -217,8 +249,9 @@ public class ChessClient {
       var file=pos.charAt(0);
       var rank=pos.charAt(1);
 
-      if (file < 97 || file > 104 || rank < 49 || rank > 56)
+      if (file < 97 || file > 104 || rank < 49 || rank > 56) {
         throw new ClientException(400, "Expected: <[a-h]><[1-8]> <[a-h]><[1-8]>");
+      }
 
       positions[index++]=new ChessPosition(rank - 48, file - 96);
     }
@@ -243,18 +276,23 @@ public class ChessClient {
   private String highlight(String... params) throws ClientException {
     assertInGameOrObserving();
 
-    if (params.length != 1 || params[0].length() != 2) throw new ClientException(400, "Expected: <file><rank>");
+    if (params.length != 1 || params[0].length() != 2) {
+      throw new ClientException(400, "Expected: <file><rank>");
+    }
 
     var file=params[0].charAt(0);
     var rank=params[0].charAt(1);
 
-    if (file < 97 || file > 104 || rank < 49 || rank > 56)
+    if (file < 97 || file > 104 || rank < 49 || rank > 56) {
       throw new ClientException(400, "Expected: <[a-h]><[1-8]> <[a-h]><[1-8]>");
+    }
 
     var position=new ChessPosition(rank - 48, file - 96);
 
     var piece=currentGame.getBoard().getPiece(position);
-    if (piece == null) throw new ClientException(400, "Not a piece!");
+    if (piece == null) {
+      throw new ClientException(400, "Not a piece!");
+    }
 
     return displayBoard(currentGame.getBoard(), teamColor, position);
   }
@@ -263,11 +301,6 @@ public class ChessClient {
     assertInGameOrObserving();
 
     return displayBoard(currentGame.getBoard(), teamColor);
-  }
-
-  public String displayGame(ChessGame game) {
-    currentGame=game;
-    return displayBoard(game.getBoard(), this.teamColor);
   }
 
   private String displayBoard(ChessBoard board, ChessGame.TeamColor perspective) {
@@ -311,33 +344,55 @@ public class ChessClient {
           background=SET_BG_COLOR_LIGHT_GREY;
           textColor=SET_TEXT_COLOR_BLACK;
           if (y == 0 || y == 9) {
-            if (x != 0 && x != 9) charToPlace=horizontalChars[order[x - 1]];
+            if (x != 0 && x != 9) {
+              charToPlace=horizontalChars[order[x - 1]];
+            }
           } else {
             charToPlace=verticalChars[order[y - 1]];
           }
         } else {
           if (y % 2 == 0) {
-            if (x % 2 == 1) background=SET_BG_COLOR_BLACK;
-            else background=SET_BG_COLOR_WHITE;
+            if (x % 2 == 1) {
+              background=SET_BG_COLOR_BLACK;
+            }
+            else {
+              background=SET_BG_COLOR_WHITE;
+            }
           } else {
-            if (x % 2 == 0) background=SET_BG_COLOR_BLACK;
-            else background=SET_BG_COLOR_WHITE;
+            if (x % 2 == 0) {
+              background=SET_BG_COLOR_BLACK;
+            }
+            else {
+              background=SET_BG_COLOR_WHITE;
+            }
           }
 
           ChessPosition pos;
 
-          if (perspective == ChessGame.TeamColor.WHITE) pos=new ChessPosition(8 - (y - 1), x);
-          else pos=new ChessPosition(y, 8- (x - 1));
+          if (perspective == ChessGame.TeamColor.WHITE) {
+            pos=new ChessPosition(8 - (y - 1), x);
+          }
+          else {
+            pos=new ChessPosition(y, 8- (x - 1));
+          }
 
           if (highlightedPos.contains(pos)) {
-            if (background.equals(SET_BG_COLOR_BLACK)) background=SET_BG_COLOR_DARK_GREEN;
-            else background=SET_BG_COLOR_GREEN;
+            if (background.equals(SET_BG_COLOR_BLACK)) {
+              background=SET_BG_COLOR_DARK_GREEN;
+            }
+            else {
+              background=SET_BG_COLOR_GREEN;
+            }
           }
 
           var piece=board.getPiece(pos);
           if (piece != null) {
-            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) textColor=SET_TEXT_COLOR_BLUE;
-            else textColor=SET_TEXT_COLOR_RED;
+            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+              textColor=SET_TEXT_COLOR_BLUE;
+            }
+            else {
+              textColor=SET_TEXT_COLOR_RED;
+            }
 
             charToPlace=switch (piece.getPieceType()) {
               case ROOK -> 'R';
@@ -394,14 +449,20 @@ public class ChessClient {
   }
 
   private void assertSignedIn() throws ClientException {
-    if (state != State.SIGNED_IN) throw new ClientException(400, "Not signed in!");
+    if (state != State.SIGNED_IN) {
+      throw new ClientException(400, "Not signed in!");
+    }
   }
 
   private void assertInGame() throws ClientException {
-    if (state != State.IN_GAME) throw new ClientException(400, "Not playing in game!");
+    if (state != State.IN_GAME) {
+      throw new ClientException(400, "Not playing in game!");
+    }
   }
 
   private void assertInGameOrObserving() throws ClientException {
-    if (state != State.OBSERVING && state != State.IN_GAME) throw new ClientException(400, "Not in game!");
+    if (state != State.OBSERVING && state != State.IN_GAME) {
+      throw new ClientException(400, "Not in game!");
+    }
   }
 }
