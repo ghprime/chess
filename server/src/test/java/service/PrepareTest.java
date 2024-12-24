@@ -7,7 +7,6 @@ public class PrepareTest {
     public static DAOManager prepareTest() {
         try {
             DAOManager dao = new SQLDAOManager();
-            dao.initialize();
             dao.getUserDAO().clear();
             dao.getAuthDAO().clear();
             dao.getGameDAO().clear();

@@ -23,7 +23,7 @@ public class Server {
     CreateGameService createGameService;
     ListGamesService listGamesService;
     JoinGameService joinGameService;
-    DAOManager daoManager = new SQLDAOManager();;
+    DAOManager daoManager;
     Gson gson = new Gson();
 
     public int run(int desiredPort) {
@@ -32,8 +32,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
         try {
-            daoManager.initialize();
-
+            daoManager = new SQLDAOManager();
             ServiceUtils.setAuthDAO(daoManager.getAuthDAO());
 
             registerService = new RegisterService(daoManager.getUserDAO(), daoManager.getAuthDAO());

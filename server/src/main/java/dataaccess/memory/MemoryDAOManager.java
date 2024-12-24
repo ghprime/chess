@@ -11,8 +11,7 @@ public class MemoryDAOManager implements DAOManager {
     private AuthDAO authDAO = null;
     private GameDAO gameDAO = null;
 
-    @Override
-    public void initialize() throws DataAccessException {
+    public MemoryDAOManager() {
         userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();

@@ -10,42 +10,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SQLDAOManager implements DAOManager {
-    private UserDAO userDAO = null;
-    private AuthDAO authDAO = null;
-    private GameDAO gameDAO = null;
+    private final UserDAO userDAO;
+    private final AuthDAO authDAO;
+    private final GameDAO gameDAO;
 
-    private final String[] createStatements={
-            """
-          create table if not exists games (
-            id int not null auto_increment,
-            name varchar(256) not null,
-            game char(64) not null,
-            currentTurn int not null,
-            whitePlayer varchar(256),
-            blackPlayer varchar(256),
-            primary key (id)
-          );
-          """,
-            """
-          create table if not exists users (
-            username varchar(256) not null unique,
-            password varchar(256) not null,
-            email varchar(256) not null,
-            primary key (username)
-          );
-          """,
-            """
-          create table if not exists authTokens (
-            username varchar(256) not null,
-            authData char(36) not null,
-            primary key (authData),
-            index(username)
-          );
-          """
-    };
-
-    @Override
-    public void initialize() throws DataAccessException {
+    public SQLDAOManager() throws DataAccessException {
         DatabaseManager.createDatabase();
 
         try (var conn=SQLUtils.getConnection()) {
@@ -62,6 +31,36 @@ public class SQLDAOManager implements DAOManager {
         authDAO = new SQLAuthDAO();
         gameDAO = new SQLGameDAO();
     }
+
+    private final String[] createStatements={
+            """
+          create table if not exists games (
+            id int not null auto_increment,
+            name varchar(256) not null,
+            game char(64) not null,
+            currentTurn int not null,
+            whitePlayer varchar(256),
+            blackPlayer varchar(256),
+            primary key (id)
+          );
+          """,
+          """
+          create table if not exists users (
+            username varchar(256) not null unique,
+            password varchar(256) not null,
+            email varchar(256) not null,
+            primary key (username)
+          );
+          """,
+          """
+          create table if not exists authTokens (
+            username varchar(256) not null,
+            authToken char(36) not null,
+            primary key (authToken),
+            index(username)
+          );
+          """
+    };
 
     @Override
     public UserDAO getUserDAO() {

@@ -31,7 +31,6 @@ class DAOTests {
   DAOManager instantiateDatabase(Class<DAOManager> daoManager) {
     try {
       DAOManager dao=daoManager.getDeclaredConstructor().newInstance();
-      dao.initialize();
       dao.getUserDAO().clear();
       dao.getAuthDAO().clear();
       dao.getGameDAO().clear();
