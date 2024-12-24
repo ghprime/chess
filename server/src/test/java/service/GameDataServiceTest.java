@@ -30,10 +30,13 @@ class GameDataServiceTest {
     userData = new UserData("username", "password");
     authData = new AuthData(userData.username());
     gameData = new GameData("game name");
+
     try {
       dao = PrepareTest.prepareTest();
 
-      if (dao == null) throw new Exception("DAO could not initialize!");
+      if (dao == null) {
+        throw new Exception("DAO could not initialize!");
+      }
 
       createGameService = new CreateGameService(dao.getGameDAO());
       listGamesService = new ListGamesService(dao.getGameDAO());

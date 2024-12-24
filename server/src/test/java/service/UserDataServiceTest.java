@@ -24,7 +24,9 @@ class UserDataServiceTest {
     );
     authData = new AuthData(userData.username());
     dao = PrepareTest.prepareTest();
-    if (dao == null) throw new Exception("DAO could not initialize");
+    if (dao == null) {
+      throw new Exception("DAO could not initialize");
+    }
 
     registerService = new RegisterService(dao.getUserDAO(), dao.getAuthDAO());
   }

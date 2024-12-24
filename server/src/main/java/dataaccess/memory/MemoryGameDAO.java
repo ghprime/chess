@@ -10,6 +10,7 @@ import java.util.List;
 public class MemoryGameDAO implements GameDAO {
     private final HashMap<Integer, GameData> games = new HashMap<>();
     private int currGameID = 0;
+
     @Override
     public GameData getGameData(int gameID) throws DataAccessException {
         return games.get(gameID);
@@ -32,7 +33,9 @@ public class MemoryGameDAO implements GameDAO {
 
     @Override
     public void updateGameData(GameData gameData) throws DataAccessException {
-        if (games.get(gameData.gameID()) == null) throw new DataAccessException("No such game!");
+        if (games.get(gameData.gameID()) == null) {
+            throw new DataAccessException("No such game!");
+        }
         games.put(gameData.gameID(), gameData);
     }
 
