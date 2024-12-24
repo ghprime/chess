@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class FullGameTest {
+public class FullGameDataTest {
     @Test
     @DisplayName("Full Game Checkmate")
     public void scholarsMate() throws InvalidMoveException {

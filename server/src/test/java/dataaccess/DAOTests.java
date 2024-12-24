@@ -1,27 +1,41 @@
 package dataaccess;
 
-import models.AuthToken;
-import models.Game;
-import models.User;
+import chess.ChessGame;
+import dataaccess.exception.AlreadyTakenException;
+import dataaccess.exception.DataAccessException;
+import dataaccess.memory.MemoryDAOManager;
+import dataaccess.sql.SQLDAOManager;
+import models.AuthData;
+import models.GameData;
+import models.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class DAOTests {
-  User user;
+  UserData userData;
+  AuthData authData;
+  GameData gameData;
 
   @BeforeEach
   void prepTest() {
-    user=new User("username", "password", "email");
+    userData = new UserData("username", "password", "email");
+    authData = new AuthData(userData.username());
+    gameData = new GameData("game name");
   }
 
-  DatabaseAccess instantiateDatabase(Class<DatabaseAccess> dao) {
+  DAOManager instantiateDatabase(Class<DAOManager> daoManager) {
     try {
-      var d=dao.getDeclaredConstructor().newInstance();
-      d.clear();
-      return d;
+      DAOManager dao=daoManager.getDeclaredConstructor().newInstance();
+      dao.initialize();
+      dao.getUserDAO().clear();
+      dao.getAuthDAO().clear();
+      dao.getGameDAO().clear();
+      return dao;
     } catch (Exception err) {
       System.out.println("Error: " + err.getMessage());
     }
@@ -29,309 +43,220 @@ class DAOTests {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void clear(Class<DatabaseAccess> daoClass) {
-    var dao=instantiateDatabase(daoClass);
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void clearUsers(Class<DAOManager> daoClass) {
+    DAOManager dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(dao::clear);
+    assertDoesNotThrow(() -> dao.getUserDAO().clear());
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void insertUserSuccess(Class<DatabaseAccess> daoClass) {
-    var dao=instantiateDatabase(daoClass);
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void clearAuth(Class<DAOManager> daoClass) {
+    DAOManager dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(() -> dao.insertUser(user));
+    assertDoesNotThrow(() -> dao.getAuthDAO().clear());
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void insertUserAlreadyExists(Class<DatabaseAccess> daoClass) {
-    var dao=instantiateDatabase(daoClass);
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void clearGames(Class<DAOManager> daoClass) {
+    DAOManager dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(() -> dao.insertUser(user));
-
-    var err=assertThrows(DataAccessException.class, () -> dao.insertUser(user));
-
-    assertEquals("already taken", err.getMessage());
+    assertDoesNotThrow(() -> dao.getGameDAO().clear());
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void insertUserBadRequest(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertUserSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    user=new User("username", null, "email");
-
-    var err=assertThrows(DataAccessException.class, () -> dao.insertUser(user));
-
-    assertEquals("bad request", err.getMessage());
+    assertDoesNotThrow(() -> dao.getUserDAO().insertUser(userData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void loginUserSuccess(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertUserAlreadyExists(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(() -> dao.insertUser(user));
+    assertDoesNotThrow(() -> dao.getUserDAO().insertUser(userData));
 
-    var token=assertDoesNotThrow(() -> dao.loginUser(user));
-
-    assertNotNull(token);
+    assertThrows(AlreadyTakenException.class, () -> dao.getUserDAO().insertUser(userData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void loginUserNoSuchUser(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getUserSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var err=assertThrows(DataAccessException.class, () -> dao.loginUser(user));
+    assertDoesNotThrow(() -> dao.getUserDAO().insertUser(userData));
 
-    assertEquals("unauthorized", err.getMessage());
+    UserData returnedUser = assertDoesNotThrow(() -> dao.getUserDAO().getUser(userData.username()));
+
+    assertEquals(returnedUser, userData);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void loginUserUnauthorized(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getUserRetrieveNull(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(() -> dao.insertUser(user));
+    assertDoesNotThrow(() -> dao.getUserDAO().insertUser(userData));
 
-    var wrongPasswordUser=new User(user.username(), user.password() + "wrong", user.email());
+    UserData returnedUser = assertDoesNotThrow(() -> dao.getUserDAO().getUser(userData.username()));
 
-    var err=assertThrows(DataAccessException.class, () -> dao.loginUser(wrongPasswordUser));
+    assertEquals(returnedUser, userData);
 
-    assertEquals("unauthorized", err.getMessage());
+    UserData nullUser = assertDoesNotThrow(() -> dao.getUserDAO().getUser("notAUsername"));
+
+    assertNull(nullUser);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void logoutUserSuccess(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertAuthDataSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
-    assertDoesNotThrow(() -> dao.logoutUser(authToken));
+    assertDoesNotThrow(() -> dao.getAuthDAO().insertAuthData(authData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void logoutUserUnauthorized(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertAuthDataFailure(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=new AuthToken(user.username());
-
-    var err=assertThrows(DataAccessException.class, () -> dao.logoutUser(authToken));
-
-    assertEquals("unauthorized", err.getMessage());
+    assertDoesNotThrow(() -> dao.getAuthDAO().insertAuthData(authData));
+    assertThrows(DataAccessException.class, () -> dao.getAuthDAO().insertAuthData(authData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void listGamesSuccess(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getAuthDataSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    assertDoesNotThrow(() -> dao.getAuthDAO().insertAuthData(authData));
 
-    var gameToInsert=new Game(1234);
+    AuthData retrievedAuth = assertDoesNotThrow(() -> dao.getAuthDAO().getAuthData(authData.authToken()));
 
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    var games=assertDoesNotThrow(() -> dao.listGames(authToken));
-
-    var containsGame=false;
-
-    for (var returnedGame : games) {
-      if (returnedGame.equals(game)) {
-        containsGame=true;
-        break;
-      }
-    }
-
-    assertTrue(containsGame);
+    assertEquals(retrievedAuth, authData);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void listGamesUnauthorized(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getAuthDataRetrieveNull(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    AuthData retrievedAuth = assertDoesNotThrow(() -> dao.getAuthDAO().getAuthData(authData.authToken()));
 
-    var gameToInsert=new Game(1234);
-
-    assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    var unauthorizedToken=new AuthToken(user.username());
-
-    var err=assertThrows(DataAccessException.class, () -> dao.listGames(unauthorizedToken));
-
-    assertEquals("unauthorized", err.getMessage());
+    assertNull(retrievedAuth);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void createGameSuccess(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void deleteAuthDataSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    assertDoesNotThrow(() -> dao.getAuthDAO().insertAuthData(authData));
 
-    var gameToInsert=new Game(1234);
-
-    assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
+    assertDoesNotThrow(() -> dao.getAuthDAO().deleteAuthData(authData.authToken()));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void createGameSuccessWithTwoGamesSameName(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void deleteAuthDataNonExistent(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
-
-    var gameToInsert1=new Game(1234, "", "", "gameName", null);
-    var gameToInsert2=new Game(1234, "", "", "gameName", null);
-
-    assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert1));
-    assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert2));
+    assertDoesNotThrow(() -> dao.getAuthDAO().deleteAuthData(authData.authToken()));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void createGameUnauthorized(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertGameSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var gameToInsert=new Game(1234);
-
-    var err=assertThrows(DataAccessException.class, () -> dao.createGame(new AuthToken(user.username()), gameToInsert));
-
-    assertEquals("unauthorized", err.getMessage());
+    assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameSuccess(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void insertGameMultipleOfSameName(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    int gameID1 = assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
+    int gameID2 = assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
 
-    var gameToInsert=new Game(1234, "white", null, "gameName", null);
-
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    assertDoesNotThrow(
-      () -> dao.joinGame(
-        authToken,
-        new Game(game.gameID(), null, user.username(), game.gameName(), null)
-      )
-    );
+    assertNotEquals(gameID1, gameID2);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameCantBeAlreadySelectedPlayer(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getGameSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    int gameID = assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
 
-    var gameToInsert=new Game(1234, null, "white", "gameName", null);
+    GameData retrievedGameData = assertDoesNotThrow(() -> dao.getGameDAO().getGameData(gameID));
 
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    var err=assertThrows(DataAccessException.class,
-      () -> dao.joinGame(
-        authToken,
-        new Game(game.gameID(), null, user.username(), game.gameName(), null)
-      )
-    );
-
-    assertEquals("already taken", err.getMessage());
+    assertEquals(gameID, retrievedGameData.gameID());
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameUnauthorized(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void getGameReturnNull(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    GameData retrievedGameData = assertDoesNotThrow(() -> dao.getGameDAO().getGameData(1));
 
-    var gameToInsert=new Game(1234, null, "white", "gameName", null);
-
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    var err=assertThrows(DataAccessException.class,
-      () -> dao.joinGame(
-        new AuthToken(
-          user.username()),
-          new Game(game.gameID(), null, user.username(), game.gameName(), null)
-      )
-    );
-
-    assertEquals("unauthorized", err.getMessage());
+    assertNull(retrievedGameData);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameCantJoinFullGame(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void updateGameSuccess(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    int gameID = assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
 
-    var gameToInsert=new Game(
-            1234,
-            "black",
-            "white",
-            "gameName",
-            null
-    );
+    GameData retrievedGameData = assertDoesNotThrow(() -> dao.getGameDAO().getGameData(gameID));
 
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
+    assertEquals(gameID, retrievedGameData.gameID());
 
-    var err=assertThrows(DataAccessException.class,
-      () -> dao.joinGame(
-        authToken,
-        new Game(game.gameID(), null, user.username(), game.gameName(), null)
-      )
-    );
+    gameData = new GameData(gameID, "WHITE", null, gameData.gameName(), new ChessGame());
 
-    assertEquals("already taken", err.getMessage());
+    assertDoesNotThrow(() -> dao.getGameDAO().updateGameData(gameData));
+
+    retrievedGameData = assertDoesNotThrow(() -> dao.getGameDAO().getGameData(gameID));
+
+    assertEquals(gameData, retrievedGameData);
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameCantJoinGameThatDoesNotExist(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void updateGameNotExists(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
-
-    var gameToInsert=new Game(1234, null, "white", "gameName", null);
-
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
-
-    var err=assertThrows(DataAccessException.class,
-      () -> dao.joinGame(
-        authToken,
-        new Game(game.gameID() + 1, null, user.username(), game.gameName(), null)
-      )
-    );
-
-    assertEquals("bad request", err.getMessage());
+    assertThrows(DataAccessException.class, () -> dao.getGameDAO().updateGameData(gameData));
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {MemoryDAO.class, MySqlDAO.class})
-  void joinGameObserver(Class<DatabaseAccess> daoClass) {
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void listGamesSuccessEmpty(Class<DAOManager> daoClass) {
     var dao=instantiateDatabase(daoClass);
 
-    var authToken=assertDoesNotThrow(() -> dao.insertUser(user));
+    List<GameData> games = assertDoesNotThrow(() -> dao.getGameDAO().listGames());
 
-    var gameToInsert=new Game(1234, null, null, "gameName", null);
+    assertTrue(games.isEmpty());
+  }
 
-    var game=assertDoesNotThrow(() -> dao.createGame(authToken, gameToInsert));
+  @ParameterizedTest
+  @ValueSource(classes = {MemoryDAOManager.class, SQLDAOManager.class})
+  void listGamesSuccessWithGames(Class<DAOManager> daoClass) {
+    var dao=instantiateDatabase(daoClass);
 
-    assertDoesNotThrow(
-      () -> dao.joinGame(
-        authToken,
-        new Game(game.gameID(), null, user.username(), game.gameName(), null)
-      )
-    );
+    int gameID = assertDoesNotThrow(() -> dao.getGameDAO().insertGameData(gameData));
+
+    List<GameData> games = assertDoesNotThrow(() -> dao.getGameDAO().listGames());
+
+    assertEquals(games.getFirst().gameID(), gameID);
   }
 }

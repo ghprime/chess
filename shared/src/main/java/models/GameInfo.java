@@ -1,10 +1,10 @@
 package models;
 
 public record GameInfo(int gameID, String whiteUsername, String blackUsername, String gameName) {
-  static public GameInfo fromGame(Game game) {
-    return new GameInfo(game.gameID(), game.whiteUsername(), game.blackUsername(), game.gameName());
+  static public GameInfo fromGame(GameData gameData) {
+    return new GameInfo(gameData.gameID(), gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName());
   }
-  public Game toGame() {
-    return new Game(gameID, whiteUsername, blackUsername, gameName, null);
+  public GameData toGame() {
+    return new GameData(gameID, whiteUsername, blackUsername, gameName, null);
   }
 }

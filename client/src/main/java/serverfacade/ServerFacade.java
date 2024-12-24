@@ -1,10 +1,10 @@
 package serverfacade;
 
 import com.google.gson.Gson;
-import models.AuthToken;
-import models.Game;
+import models.AuthData;
+import models.GameData;
 import models.GameInfo;
-import models.User;
+import models.UserData;
 import ui.ClientException;
 
 import java.io.BufferedReader;
@@ -39,41 +39,41 @@ public class ServerFacade {
     makeRequest("DELETE", "db", null, null, null);
   }
 
-  public AuthToken registerUser(User user) throws ClientException {
-    return makeRequest("POST", "user", user, AuthToken.class, null);
+  public AuthData registerUser(UserData userData) throws ClientException {
+    return makeRequest("POST", "user", userData, AuthData.class, null);
   }
 
-  public AuthToken login(User user) throws ClientException {
-    return makeRequest("POST", "session", user, AuthToken.class, null);
+  public AuthData login(UserData userData) throws ClientException {
+    return makeRequest("POST", "session", userData, AuthData.class, null);
   }
 
-  public void logout(AuthToken authToken) throws ClientException {
-    makeRequest("DELETE", "session", null, null, authToken);
+  public void logout(AuthData authData) throws ClientException {
+    makeRequest("DELETE", "session", null, null, authData);
   }
 
-  public List<Game> listGames(AuthToken authToken) throws ClientException {
-    var games=makeRequest("GET", "game", null, GamesList.class, authToken);
+  public List<GameData> listGames(AuthData authData) throws ClientException {
+    var games=makeRequest("GET", "game", null, GamesList.class, authData);
     if (games == null) {
       return new ArrayList<>();
     }
     return games.games().stream().map(GameInfo::toGame).toList();
   }
 
-  public Game createGame(AuthToken authToken, String gameName) throws ClientException {
-    return makeRequest("POST", "game", new Game(gameName), Game.class, authToken);
+  public GameData createGame(AuthData authData, String gameName) throws ClientException {
+    return makeRequest("POST", "game", new GameData(gameName), GameData.class, authData);
   }
 
-  public void joinGame(AuthToken authToken, int gameID, String playerColor) throws ClientException {
-    makeRequest("PUT", "game", new JoinGameRequest(gameID, playerColor), null, authToken);
+  public void joinGame(AuthData authData, int gameID, String playerColor) throws ClientException {
+    makeRequest("PUT", "game", new JoinGameRequest(gameID, playerColor), null, authData);
   }
 
-  private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, AuthToken authToken) throws ClientException {
+  private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, AuthData authData) throws ClientException {
     try {
       var connection=getConnection(path);
       connection.setRequestMethod(method);
       connection.setReadTimeout(5000);
-      if (authToken != null) {
-        connection.addRequestProperty("Authorization", authToken.authToken());
+      if (authData != null) {
+        connection.addRequestProperty("Authorization", authData.authToken());
       }
 
       if (request != null) {

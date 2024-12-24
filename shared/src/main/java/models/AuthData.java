@@ -8,13 +8,13 @@ import java.util.UUID;
  * @param authToken Generated uuid
  * @param username  Username of user
  */
-public record AuthToken(String authToken, String username) {
+public record AuthData(String authToken, String username) {
   /**
    * Generates a new AuthToken when supplied with only the username
    *
    * @param username Username of the AuthToken bearer
    */
-  public AuthToken(String username) {
+  public AuthData(String username) {
     this(UUID.randomUUID().toString(), username);
   }
 }

@@ -1,0 +1,80 @@
+package dataaccess.sql;
+
+import dataaccess.*;
+import dataaccess.daointerface.AuthDAO;
+import dataaccess.daointerface.GameDAO;
+import dataaccess.daointerface.UserDAO;
+import dataaccess.exception.DataAccessException;
+
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class SQLDAOManager implements DAOManager {
+    private UserDAO userDAO = null;
+    private AuthDAO authDAO = null;
+    private GameDAO gameDAO = null;
+
+    private final String[] createStatements={
+            """
+          create table if not exists games (
+            id int not null auto_increment,
+            name varchar(256) not null,
+            game char(64) not null,
+            currentTurn int not null,
+            whitePlayer varchar(256),
+            blackPlayer varchar(256),
+            primary key (id)
+          );
+          """,
+            """
+          create table if not exists users (
+            username varchar(256) not null unique,
+            password varchar(256) not null,
+            email varchar(256) not null,
+            primary key (username)
+          );
+          """,
+            """
+          create table if not exists authTokens (
+            username varchar(256) not null,
+            authData char(36) not null,
+            primary key (authData),
+            index(username)
+          );
+          """
+    };
+
+    @Override
+    public void initialize() throws DataAccessException {
+        DatabaseManager.createDatabase();
+
+        try (var conn=SQLUtils.getConnection()) {
+            for (String statement : createStatements) {
+                try (PreparedStatement preparedStatement=conn.prepareStatement(statement)) {
+                    preparedStatement.executeUpdate();
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+
+        userDAO = new SQLUserDAO();
+        authDAO = new SQLAuthDAO();
+        gameDAO = new SQLGameDAO();
+    }
+
+    @Override
+    public UserDAO getUserDAO() {
+        return userDAO;
+    }
+
+    @Override
+    public AuthDAO getAuthDAO() {
+        return authDAO;
+    }
+
+    @Override
+    public GameDAO getGameDAO() {
+        return gameDAO;
+    }
+}

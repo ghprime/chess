@@ -1,8 +1,8 @@
 package ui;
 
 import chess.*;
-import models.AuthToken;
-import models.User;
+import models.AuthData;
+import models.UserData;
 import serverfacade.ServerFacade;
 
 import java.util.*;
@@ -13,7 +13,7 @@ public class ChessClient {
   private final ServerFacade server;
   private final HashMap<Integer, Integer> gameIDs;
   private State state;
-  private AuthToken authToken;
+  private AuthData authData;
   private ChessGame currentGame;
   private ChessGame.TeamColor teamColor;
   private int gameID;
@@ -71,7 +71,7 @@ public class ChessClient {
       throw new ClientException(400, "Expected: <username> <password> <email>");
     }
 
-    authToken=server.registerUser(new User(params[0], params[1], params[2]));
+    authData =server.registerUser(new UserData(params[0], params[1], params[2]));
     state=State.SIGNED_IN;
     return "Successfully registered and logged in!";
   }
@@ -81,7 +81,7 @@ public class ChessClient {
       throw new ClientException(400, "Expected: <username> <password>");
     }
 
-    authToken=server.login(new User(params[0], params[1]));
+    authData =server.login(new UserData(params[0], params[1]));
     state=State.SIGNED_IN;
     return "Successfully logged in!";
   }
@@ -89,14 +89,14 @@ public class ChessClient {
   private String logout() throws ClientException {
     assertSignedIn();
 
-    server.logout(authToken);
+    server.logout(authData);
     state=State.SIGNED_OUT;
     return "Successfully logged out!";
   }
 
   private String listGames() throws ClientException {
     assertSignedIn();
-    var games=server.listGames(authToken);
+    var games=server.listGames(authData);
     gameIDs.clear();
 
     if (games.isEmpty()) {
@@ -147,7 +147,7 @@ public class ChessClient {
       throw new ClientException(400, "Expected: create <gameName>");
     }
 
-    server.createGame(authToken, params[0]);
+    server.createGame(authData, params[0]);
     return "Successfully created game!";
   }
 
@@ -166,7 +166,7 @@ public class ChessClient {
 
     gameID=gameIDs.get(id);
 
-    server.joinGame(authToken, gameID, params[1]);
+    server.joinGame(authData, gameID, params[1]);
     teamColor="BLACK".equals(params[1]) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
 
     state=State.IN_GAME;
@@ -193,7 +193,7 @@ public class ChessClient {
 
     gameID=gameIDs.get(id);
 
-    server.joinGame(authToken, gameID, "OBSERVER");
+    server.joinGame(authData, gameID, "OBSERVER");
 
     state=State.OBSERVING;
 

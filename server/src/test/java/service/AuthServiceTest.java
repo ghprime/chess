@@ -1,72 +1,64 @@
 package service;
 
-import dataaccess.DataAccessException;
-import dataaccess.DatabaseAccess;
-import models.AuthToken;
-import models.User;
+import dataaccess.DAOManager;
+import dataaccess.exception.UnauthorizedException;
+import models.AuthData;
+import models.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mindrot.jbcrypt.BCrypt;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class AuthServiceTest {
-  DatabaseAccess dao;
+  DAOManager dao;
+  LoginService loginService;
+  LogoutService logoutService;
+  UserData userData;
+  AuthData authData;
 
   @BeforeEach
-  void prepTest() {
+  void prepTest() throws Exception {
+    userData = new UserData(
+            "username",
+            BCrypt.hashpw("password", BCrypt.gensalt()),
+            "email"
+    );
+    authData = new AuthData(userData.username());
     dao = PrepareTest.prepareTest();
+    if (dao == null) throw new Exception("DAO could not initialize");
+
+    loginService = new LoginService(dao.getUserDAO(), dao.getAuthDAO());
+    logoutService = new LogoutService(dao.getAuthDAO());
   }
 
   @Test
   void loginSuccess() {
-    var user=new User("username", "password", "email");
-
-    var authService=new AuthService(dao);
-
-    var userService=new UserService(dao);
-
-    assertDoesNotThrow(() -> userService.registerUser(user));
-
-    var authToken=assertDoesNotThrow(() -> authService.login(user));
-
-    assertNotNull(authToken);
-    assertNotNull(authToken.authToken());
-    assertNotNull(authToken.username());
+    assertDoesNotThrow(() -> dao.getUserDAO().insertUser(userData));
+    authData = assertDoesNotThrow(() -> loginService.login(
+            new UserData(
+                    userData.username(),
+                    "password",
+                    userData.email()
+            )
+    ));
+    assertNotNull(authData);
+    assertNotNull(authData.authToken());
   }
 
   @Test
   void loginFailureNoSuchUser() {
-    var user=new User("username", null, "email");
-
-    var authService=new AuthService(dao);
-
-    var err=assertThrows(DataAccessException.class, () -> authService.login(user));
-
-    assertEquals("unauthorized", err.getMessage());
+    assertThrows(UnauthorizedException.class, () -> loginService.login(userData));
   }
 
   @Test
   void logoutSuccess() {
-    var user=new User("username", "password", "email");
-
-    var authService=new AuthService(dao);
-
-    var userService=new UserService(dao);
-
-    assertDoesNotThrow(() -> userService.registerUser(user));
-
-    var authToken=assertDoesNotThrow(() -> authService.login(user));
-
-    assertDoesNotThrow(() -> authService.logout(authToken));
+    assertDoesNotThrow(() -> dao.getAuthDAO().insertAuthData(authData));
+    assertDoesNotThrow(() -> logoutService.logout(authData));
   }
 
   @Test
   void logoutNoAuthFailure() {
-    var authService=new AuthService(dao);
-    var authToken=new AuthToken("username");
-
-    var err=assertThrows(DataAccessException.class, () -> authService.logout(authToken));
-
-    assertEquals("unauthorized", err.getMessage());
+    assertThrows(UnauthorizedException.class, () -> logoutService.logout(authData));
   }
 }

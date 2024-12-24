@@ -11,13 +11,13 @@ import chess.ChessGame;
  * @param gameName      Name of the game
  * @param game          ChessGame object
  */
-public record Game(int gameID, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
+public record GameData(int gameID, String whiteUsername, String blackUsername, String gameName, ChessGame game) {
   /**
    * Creates a game record with only the game ID. Used for database lookups
    *
    * @param gameID Integer ID of the game
    */
-  public Game(int gameID) {
+  public GameData(int gameID) {
     this(gameID, "", "", "", null);
   }
 
@@ -26,7 +26,7 @@ public record Game(int gameID, String whiteUsername, String blackUsername, Strin
    *
    * @param gameName String name of the game to create
    */
-  public Game(String gameName) {
+  public GameData(String gameName) {
     this(0, null, null, gameName, null);
   }
 }

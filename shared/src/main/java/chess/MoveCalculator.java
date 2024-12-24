@@ -30,7 +30,7 @@ public class MoveCalculator {
         }
 
         if (moveFunction == null) {
-            return new HashSet<ChessMove>();
+            return new HashSet<>();
         }
 
         var moveManager=new MoveManager(board, piece, pos);
@@ -87,14 +87,14 @@ public class MoveCalculator {
         var col=pos.getColumn();
 
         var positions=new int[][]{
-                {row + 1, col - 2},
-                {row + 2, col + 1},
-                {row + 1, col + 2},
-                {row + 2, col - 1},
-                {row - 1, col - 2},
-                {row - 2, col + 1},
-                {row - 1, col + 2},
-                {row - 2, col - 1},
+            {row + 1, col - 2},
+            {row + 2, col + 1},
+            {row + 1, col + 2},
+            {row + 2, col - 1},
+            {row - 1, col - 2},
+            {row - 2, col + 1},
+            {row - 1, col + 2},
+            {row - 2, col - 1},
         };
 
         for (int index=0; index < 8; ++index) {

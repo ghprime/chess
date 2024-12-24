@@ -1,6 +1,11 @@
 package server;
 
+import chess.ChessGame;
 import dataaccess.*;
+import dataaccess.exception.AlreadyTakenException;
+import dataaccess.exception.DataAccessException;
+import dataaccess.exception.UnauthorizedException;
+import dataaccess.sql.SQLDAOManager;
 import models.*;
 import service.*;
 import spark.*;
@@ -11,11 +16,15 @@ import java.util.*;
 import static spark.Spark.*;
 
 public class Server {
-    AuthService authService;
-    UserService userService;
-    GameService gameService;
-    TestingService testingService;
-    DatabaseAccess dao;
+    RegisterService registerService;
+    LoginService loginService;
+    LogoutService logoutService;
+    ClearService clearService;
+    CreateGameService createGameService;
+    ListGamesService listGamesService;
+    JoinGameService joinGameService;
+    DAOManager daoManager = new SQLDAOManager();;
+    Gson gson = new Gson();
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -23,16 +32,24 @@ public class Server {
         Spark.staticFiles.location("web");
 
         try {
-            dao=MySqlDAO.getInstance();
+            daoManager.initialize();
 
-            authService=new AuthService(dao);
-            userService=new UserService(dao);
-            gameService=new GameService(dao);
-            testingService=new TestingService(dao);
+            ServiceUtils.setAuthDAO(daoManager.getAuthDAO());
+
+            registerService = new RegisterService(daoManager.getUserDAO(), daoManager.getAuthDAO());
+            loginService = new LoginService(daoManager.getUserDAO(), daoManager.getAuthDAO());
+            logoutService = new LogoutService(daoManager.getAuthDAO());
+            clearService = new ClearService(daoManager.getUserDAO(), daoManager.getAuthDAO(), daoManager.getGameDAO());
+            createGameService = new CreateGameService(daoManager.getGameDAO());
+            listGamesService = new ListGamesService(daoManager.getGameDAO());
+            joinGameService = new JoinGameService(daoManager.getGameDAO());
         } catch (DataAccessException e) {
             System.out.println(e.getMessage());
+            return -1;
         }
 
+        exception(DataAccessException.class, this::databaseErrorHandler);
+        exception(BadRequestException.class, this::badRequestErrorHandler);
         exception(Exception.class, this::errorHandler);
 
         post("/user", this::registerUser);
@@ -56,114 +73,154 @@ public class Server {
         Spark.awaitStop();
     }
 
-    private Object registerUser(Request req, Response res) {
-        var user=new Gson().fromJson(req.body(), User.class);
-        AuthToken authToken;
-        try {
-            authToken=userService.registerUser(user);
-            res.status(200);
-            res.body(toJSON(authToken));
-            return toJSON(authToken);
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
+    private Object registerUser(Request req, Response res) throws BadRequestException, DataAccessException {
+        UserData user = gson.fromJson(req.body(), UserData.class);
+
+        if (user.username() == null || user.username().isEmpty()
+                || user.password() == null || user.password().isEmpty()
+                || user.email() == null || user.email().isEmpty()
+        ) {
+            throw new BadRequestException();
         }
+
+        AuthData authData = registerService.register(user);
+        res.status(200);
+        res.body(toJSON(authData));
+        return toJSON(authData);
     }
 
-    private Object login(Request req, Response res) {
-        var user=new Gson().fromJson(req.body(), User.class);
-        AuthToken authToken;
-        try {
-            authToken=authService.login(user);
-            res.status(200);
-            res.body(toJSON(authToken));
-            return toJSON(authToken);
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
+    private Object login(Request req, Response res) throws BadRequestException, DataAccessException {
+        var user = gson.fromJson(req.body(), UserData.class);
+
+        if (user.username() == null || user.username().isEmpty()
+                || user.password() == null || user.password().isEmpty()
+        ) {
+            throw new BadRequestException();
         }
+
+        AuthData authData = loginService.login(user);
+        res.status(200);
+        res.body(toJSON(authData));
+        return toJSON(authData);
     }
 
-    private Object logout(Request req, Response res) {
+    private Object logout(Request req, Response res) throws BadRequestException, DataAccessException {
         String authTokenString=req.headers().contains("authorization") ? req.headers("authorization") : req.headers("Authorization");
-        AuthToken authToken=new AuthToken(authTokenString, "");
-        try {
-            authService.logout(authToken);
-            res.status(200);
-            return "{}";
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
+
+        if (authTokenString == null || authTokenString.isEmpty()) {
+            throw new BadRequestException();
         }
+
+        AuthData authData = new AuthData(authTokenString, "");
+        logoutService.logout(authData);
+        res.status(200);
+        return "{}";
     }
 
-    private Object listGames(Request req, Response res) {
+    private Object listGames(Request req, Response res) throws BadRequestException, DataAccessException {
         String authTokenString=req.headers().contains("authorization") ? req.headers("authorization") : req.headers("Authorization");
-        AuthToken authToken=new AuthToken(authTokenString, "");
-        try {
-            var games=gameService.listGames(authToken);
-            ArrayList<GameInfo> gameInfos=new ArrayList<>();
-            for (var game : games) {
-                gameInfos.add(GameInfo.fromGame(game));
-            }
-            res.status(200);
-            return toJSON(Collections.singletonMap("games", gameInfos));
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
+
+        if (authTokenString == null || authTokenString.isEmpty()) {
+            throw new BadRequestException();
         }
+
+        AuthData authData = new AuthData(authTokenString, "");
+        List<GameData> games = listGamesService.listGames(authData);
+
+        ArrayList<GameInfo> gameInfos = new ArrayList<>();
+
+        for (var game : games) {
+            gameInfos.add(GameInfo.fromGame(game));
+        }
+
+        res.status(200);
+        return toJSON(Collections.singletonMap("games", gameInfos));
     }
 
-    private Object createGame(Request req, Response res) {
+    private Object createGame(Request req, Response res) throws BadRequestException, DataAccessException {
         String authTokenString=req.headers().contains("authorization") ? req.headers("authorization") : req.headers("Authorization");
-        AuthToken authToken=new AuthToken(authTokenString, "");
-        try {
-            var game=gameService.createGame(authToken, new Gson().fromJson(req.body(), Game.class));
-            res.status(200);
-            return toJSON(Collections.singletonMap("gameID", game.gameID()));
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
+
+        if (authTokenString == null || authTokenString.isEmpty()) {
+            throw new BadRequestException();
         }
+
+        AuthData authData =new AuthData(authTokenString, "");
+
+        GameData gameData = gson.fromJson(req.body(), GameData.class);
+
+        int gameID=createGameService.createGame(gameData.gameName(), authData);
+
+        res.status(200);
+
+        return toJSON(Collections.singletonMap("gameID", gameID));
     }
 
-    private Object joinGame(Request req, Response res) {
+    private Object joinGame(Request req, Response res) throws BadRequestException, DataAccessException {
         String authTokenString=req.headers().contains("authorization") ? req.headers("authorization") : req.headers("Authorization");
-        AuthToken authToken=new AuthToken(authTokenString, "");
-        try {
-            var body=new Gson().fromJson(req.body(), HashMap.class);
-            int gameID=(int) Math.round((Double) body.get("gameID"));
-            var playerColor=(String) body.get("playerColor");
-            var white="WHITE".equals(playerColor) ? playerColor : null;
-            var black="BLACK".equals(playerColor) ? playerColor : null;
-            var isObserver="OBSERVER".equals(playerColor);
-            if (white == null && black == null && !isObserver) {
-                return databaseErrorHandler(new DataAccessException("Must specify color"), req, res);
-            }
-            var game=new Game(gameID, white, black, null, null);
-            gameService.joinGame(authToken, game);
-            res.status(200);
-            return "{}";
-        } catch (DataAccessException err) {
-            return databaseErrorHandler(err, req, res);
-        } catch (NullPointerException err) {
-            var body=errorHandler(err, req, res);
-            res.status(400);
-            return body;
+
+        if (authTokenString == null || authTokenString.isEmpty()) {
+            throw new BadRequestException();
         }
+
+        AuthData authData =new AuthData(authTokenString, "");
+
+        HashMap<String, Object> body = gson.fromJson(req.body(), HashMap.class);
+
+        if (body.get("gameID") == null) {
+            throw new BadRequestException();
+        }
+
+        int gameID=(int) Math.round((Double) body.get("gameID"));
+
+        if (gameID < 0) {
+            throw new BadRequestException();
+        }
+
+        if (body.get("playerColor") == null) {
+            throw new BadRequestException();
+        }
+
+        String playerColor=(String) body.get("playerColor");
+
+        ChessGame.TeamColor colorWanted = null;
+
+        switch (playerColor) {
+            case "WHITE":
+                colorWanted = ChessGame.TeamColor.WHITE;
+                break;
+            case "BLACK":
+                colorWanted = ChessGame.TeamColor.BLACK;
+                break;
+            default:
+                throw new BadRequestException();
+        };
+
+        joinGameService.joinGame(gameID, colorWanted, authData);
+
+        res.status(200);
+        return "{}";
     }
 
-    private Object clear(Request request, Response response) {
-        try {
-            testingService.clear();
-        } catch (Exception err) {
-            return errorHandler(err, request, response);
-        }
+    private Object clear(Request request, Response response) throws DataAccessException {
+        clearService.clear();
         response.status(200);
         response.body("{}");
         return "{}";
     }
 
     private Object errorHandler(Exception err, Request req, Response res) {
-        var body=getJSONError(err.getMessage());
+        String body = getJSONError(err.getMessage());
         res.type("application/json");
         res.status(500);
         res.body(body);
+        return body;
+    }
+
+    private Object badRequestErrorHandler(BadRequestException err, Request req, Response res) {
+        String body = getJSONError(err.getMessage());
+        res.type("application/json");
+        res.body(body);
+        res.status(400);
         return body;
     }
 
@@ -171,10 +228,12 @@ public class Server {
         int status;
         var body=getJSONError(err.getMessage());
 
-        switch (err.getMessage()) {
-            case "unauthorized" -> status=401;
-            case "already taken" -> status=403;
-            default -> status=400;
+        if (err instanceof UnauthorizedException) {
+            status = 401;
+        } else if (err instanceof AlreadyTakenException) {
+            status = 403;
+        } else {
+            status = 400;
         }
 
         res.type("application/json");
@@ -184,11 +243,11 @@ public class Server {
     }
 
     private String getJSONError(String message) {
-        return new Gson().toJson(new ErrorResponse(message));
+        return gson.toJson(new ErrorResponse(message));
     }
 
     private String toJSON(Object obj) {
-        return new Gson().toJson(obj);
+        return gson.toJson(obj);
     }
 
     private record ErrorResponse(String message) {

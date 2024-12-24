@@ -5,7 +5,7 @@ import org.junit.jupiter.api.*;
 
 import static passoff.chess.TestUtilities.loadBoard;
 
-public class GameStatusTests {
+public class GameDataStatusTests {
 
     @Test
     @DisplayName("New Game sets up default values")

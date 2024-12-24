@@ -1,7 +1,7 @@
 package client;
 
-import models.AuthToken;
-import models.User;
+import models.AuthData;
+import models.UserData;
 import org.junit.jupiter.api.*;
 import server.Server;
 import serverfacade.ServerFacade;
@@ -14,14 +14,15 @@ public class ServerFacadeTests {
     private static Server server;
 
     private static ServerFacade facade=new ServerFacade();
-    private static User user;
+    private static UserData userData;
+    private static final String UNAUTHORIZED = "Error: Unauthorized!";
 
     @BeforeAll
     public static void init() throws ClientException {
         server = new Server();
         var port = server.run(0);
         facade = new ServerFacade(port);
-        user = new User("user", "pass", "email");
+        userData = new UserData("user", "pass", "email");
         System.out.println("Started test HTTP server on " + port);
     }
 
@@ -43,32 +44,32 @@ public class ServerFacadeTests {
 
     @Test
     void registerUserSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         assertNotNull(authToken);
-        assertEquals(user.username(), authToken.username());
+        assertEquals(userData.username(), authToken.username());
         assertNotNull(authToken.authToken());
     }
 
     @Test
     void registerUserAlreadyExists() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         assertNotNull(authToken);
-        assertEquals(user.username(), authToken.username());
+        assertEquals(userData.username(), authToken.username());
         assertNotNull(authToken.authToken());
-        var ex=assertThrows(ClientException.class, () -> facade.registerUser(user));
-        assertEquals("Error: already taken", ex.getMessage());
+        var ex=assertThrows(ClientException.class, () -> facade.registerUser(userData));
+        assertEquals("Error: Username already taken!", ex.getMessage());
     }
 
     @Test
     void loginSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         assertNotNull(authToken);
-        assertEquals(user.username(), authToken.username());
+        assertEquals(userData.username(), authToken.username());
         assertNotNull(authToken.authToken());
 
-        var loginAuthToken=assertDoesNotThrow(() -> facade.login(user));
+        var loginAuthToken=assertDoesNotThrow(() -> facade.login(userData));
         assertNotNull(loginAuthToken);
-        assertEquals(user.username(), loginAuthToken.username());
+        assertEquals(userData.username(), loginAuthToken.username());
         assertNotNull(loginAuthToken.authToken());
 
         assertNotEquals(authToken.authToken(), loginAuthToken.authToken());
@@ -76,31 +77,31 @@ public class ServerFacadeTests {
 
     @Test
     void loginUnauthorized() {
-        var ex=assertThrows(ClientException.class, () -> facade.login(user));
-        assertEquals("Error: unauthorized", ex.getMessage());
+        var ex=assertThrows(ClientException.class, () -> facade.login(userData));
+        assertEquals(UNAUTHORIZED, ex.getMessage());
     }
 
     @Test
     void logoutSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         assertDoesNotThrow(() -> facade.logout(authToken));
         var ex=assertThrows(ClientException.class, () -> facade.listGames(authToken));
-        assertEquals("Error: unauthorized", ex.getMessage());
+        assertEquals(UNAUTHORIZED, ex.getMessage());
     }
 
     @Test
     void logoutUnauthorized() {
-        var authToken=new AuthToken("user");
+        var authToken=new AuthData("user");
         var ex=assertThrows(ClientException.class, () -> facade.logout(authToken));
 
-        assertEquals("Error: unauthorized", ex.getMessage());
+        assertEquals(UNAUTHORIZED, ex.getMessage());
     }
 
     @Test
     void listGamesSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         assertNotNull(authToken);
-        assertEquals(user.username(), authToken.username());
+        assertEquals(userData.username(), authToken.username());
         assertNotNull(authToken.authToken());
 
         var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
@@ -112,45 +113,38 @@ public class ServerFacadeTests {
 
     @Test
     void listGamesUnauthorized() {
-        var authToken=new AuthToken("user");
+        var authToken=new AuthData("user");
         var ex=assertThrows(ClientException.class, () -> facade.listGames(authToken));
-        assertEquals("Error: unauthorized", ex.getMessage());
+        assertEquals(UNAUTHORIZED, ex.getMessage());
     }
 
     @Test
     void createGameSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
         assertNotNull(game);
     }
 
     @Test
     void createGameUnauthorized() {
-        var authToken=new AuthToken("user");
+        var authToken=new AuthData("user");
         var ex=assertThrows(ClientException.class, () -> facade.createGame(authToken, "game"));
-        assertEquals("Error: unauthorized", ex.getMessage());
+        assertEquals(UNAUTHORIZED, ex.getMessage());
     }
 
     @Test
     void joinGameSuccess() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
         assertDoesNotThrow(() -> facade.joinGame(authToken, game.gameID(), "WHITE"));
     }
 
     @Test
     void joinGameSlotTaken() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
+        var authToken=assertDoesNotThrow(() -> facade.registerUser(userData));
         var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
         assertDoesNotThrow(() -> facade.joinGame(authToken, game.gameID(), "WHITE"));
         var ex=assertThrows(ClientException.class, () -> facade.joinGame(authToken, game.gameID(), "WHITE"));
-        assertEquals("Error: already taken", ex.getMessage());
-    }
-
-    @Test
-    void observeGame() {
-        var authToken=assertDoesNotThrow(() -> facade.registerUser(user));
-        var game=assertDoesNotThrow(() -> facade.createGame(authToken, "game"));
-        assertDoesNotThrow(() -> facade.joinGame(authToken, game.gameID(), "OBSERVER"));
+        assertEquals("Error: Player WHITE is already filled!", ex.getMessage());
     }
 }
