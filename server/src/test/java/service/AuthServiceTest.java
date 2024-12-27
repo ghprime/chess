@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.DAOManager;
+import dataaccess.exception.DataAccessException;
 import dataaccess.exception.UnauthorizedException;
 import models.AuthData;
 import models.UserData;
@@ -18,7 +19,7 @@ class AuthServiceTest {
   AuthData authData;
 
   @BeforeEach
-  void prepTest() throws Exception {
+  void prepTest() throws DataAccessException {
     userData = new UserData(
             "username",
             BCrypt.hashpw("password", BCrypt.gensalt()),
@@ -26,10 +27,6 @@ class AuthServiceTest {
     );
     authData = new AuthData(userData.username());
     dao = PrepareTest.prepareTest();
-    
-    if (dao == null) {
-      throw new Exception("DAO could not initialize");
-    }
 
     loginService = new LoginService(dao.getUserDAO(), dao.getAuthDAO());
     logoutService = new LogoutService(dao.getAuthDAO());

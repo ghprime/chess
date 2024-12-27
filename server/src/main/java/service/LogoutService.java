@@ -12,7 +12,7 @@ public class LogoutService {
     }
 
     public void logout(AuthData authData) throws DataAccessException {
-        ServiceUtils.verifyAuthData(authData);
+        ServiceUtils.validateAuthToken(authData);
 
         authDAO.deleteAuthData(authData.authToken());
     }

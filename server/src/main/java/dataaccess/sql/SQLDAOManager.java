@@ -41,6 +41,7 @@ public class SQLDAOManager implements DAOManager {
             currentTurn int not null,
             whitePlayer varchar(256),
             blackPlayer varchar(256),
+            gameOver boolean not null,
             primary key (id)
           );
           """,

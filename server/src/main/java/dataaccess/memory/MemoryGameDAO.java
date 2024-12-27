@@ -23,7 +23,8 @@ public class MemoryGameDAO implements GameDAO {
                 gameData.whiteUsername(),
                 gameData.blackUsername(),
                 gameData.gameName(),
-                gameData.game()
+                gameData.game(),
+                gameData.gameOver()
         );
         
         games.put(currGameID, gameToInsert);

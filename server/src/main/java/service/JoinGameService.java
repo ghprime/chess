@@ -15,7 +15,7 @@ public class JoinGameService {
     }
 
     public void joinGame(int gameID, ChessGame.TeamColor playerColor, AuthData authData) throws DataAccessException {
-        AuthData verifiedAuth = ServiceUtils.verifyAuthData(authData);
+        AuthData verifiedAuth = ServiceUtils.validateAuthToken(authData);
 
         GameData gameToJoin = gameDAO.getGameData(gameID);
 
@@ -34,7 +34,8 @@ public class JoinGameService {
                     gameToJoin.whiteUsername(),
                     verifiedAuth.username(),
                     gameToJoin.gameName(),
-                    gameToJoin.game()
+                    gameToJoin.game(),
+                    gameToJoin.gameOver()
             );
         } else {
             if (gameToJoin.whiteUsername() != null) {
@@ -45,7 +46,8 @@ public class JoinGameService {
                     verifiedAuth.username(),
                     gameToJoin.blackUsername(),
                     gameToJoin.gameName(),
-                    gameToJoin.game()
+                    gameToJoin.game(),
+                    gameToJoin.gameOver()
             );
         }
 

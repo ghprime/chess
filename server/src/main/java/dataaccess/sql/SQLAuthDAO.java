@@ -2,7 +2,6 @@ package dataaccess.sql;
 
 import dataaccess.daointerface.AuthDAO;
 import dataaccess.exception.DataAccessException;
-import dataaccess.exception.UnauthorizedException;
 import models.AuthData;
 
 import java.util.List;

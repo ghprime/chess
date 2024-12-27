@@ -13,7 +13,7 @@ public class CreateGameService {
     }
 
     public int createGame(String gameName, AuthData authData) throws DataAccessException {
-        ServiceUtils.verifyAuthData(authData);
+        ServiceUtils.validateAuthToken(authData);
 
         GameData newGame = new GameData(gameName);
 

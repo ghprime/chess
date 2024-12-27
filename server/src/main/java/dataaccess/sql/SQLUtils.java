@@ -72,6 +72,7 @@ class SQLUtils {
             switch (param) {
                 case String s -> ps.setString(i + 1, s);
                 case Integer integer -> ps.setInt(i + 1, integer);
+                case Boolean bool -> ps.setBoolean(i + 1, bool);
                 case null -> ps.setNull(i + 1, NULL);
                 default -> {
                 }

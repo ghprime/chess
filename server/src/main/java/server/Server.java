@@ -3,6 +3,7 @@ package server;
 import chess.ChessGame;
 import dataaccess.*;
 import dataaccess.exception.AlreadyTakenException;
+import dataaccess.exception.BadRequestException;
 import dataaccess.exception.DataAccessException;
 import dataaccess.exception.UnauthorizedException;
 import dataaccess.sql.SQLDAOManager;

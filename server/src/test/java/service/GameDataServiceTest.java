@@ -4,13 +4,10 @@ import chess.ChessGame;
 import dataaccess.DAOManager;
 import dataaccess.exception.DataAccessException;
 import dataaccess.exception.UnauthorizedException;
-import dataaccess.memory.MemoryDAOManager;
-import dataaccess.sql.SQLDAOManager;
 import models.AuthData;
 import models.GameData;
 import models.UserData;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.util.List;
 
@@ -26,24 +23,16 @@ class GameDataServiceTest {
   JoinGameService joinGameService;
 
   @BeforeEach
-  void prepTest() {
+  void prepTest() throws DataAccessException {
     userData = new UserData("username", "password");
     authData = new AuthData(userData.username());
     gameData = new GameData("game name");
 
-    try {
-      dao = PrepareTest.prepareTest();
+    dao = PrepareTest.prepareTest();
 
-      if (dao == null) {
-        throw new Exception("DAO could not initialize!");
-      }
-
-      createGameService = new CreateGameService(dao.getGameDAO());
-      listGamesService = new ListGamesService(dao.getGameDAO());
-      joinGameService = new JoinGameService(dao.getGameDAO());
-    } catch (Exception err) {
-      System.out.println("Error: " + err.getMessage());
-    }
+    createGameService = new CreateGameService(dao.getGameDAO());
+    listGamesService = new ListGamesService(dao.getGameDAO());
+    joinGameService = new JoinGameService(dao.getGameDAO());
   }
 
   @Test

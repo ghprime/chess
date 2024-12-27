@@ -20,7 +20,7 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public int insertGameData(GameData gameData) throws DataAccessException {
-        String statement="insert into games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);";
+        String statement="insert into games (name, game, currentTurn, whitePlayer, blackPlayer, gameOver) values (?, ?, 0, ?, ?, ?);";
 
         ChessGame gameToInsert=new ChessGame();
         gameToInsert.getBoard().resetBoard();
@@ -30,7 +30,8 @@ public class SQLGameDAO implements GameDAO {
                 gameData.gameName(),
                 gameToInsert.serialize(),
                 gameData.whiteUsername(),
-                gameData.blackUsername()
+                gameData.blackUsername(),
+                gameData.gameOver()
         );
 
         return info.generatedID();
@@ -38,7 +39,7 @@ public class SQLGameDAO implements GameDAO {
 
     @Override
     public void updateGameData(GameData gameData) throws DataAccessException {
-        String updateStatement="update games set game = ?, currentTurn = ?, whitePlayer = ?, blackPlayer = ? where id = ?;";
+        String updateStatement="update games set game = ?, currentTurn = ?, whitePlayer = ?, blackPlayer = ?, gameOver = ? where id = ?;";
 
         ChessGame chessGame = gameData.game() == null ? new ChessGame() : gameData.game();
 
@@ -48,6 +49,7 @@ public class SQLGameDAO implements GameDAO {
                 chessGame.getTeamTurn() == ChessGame.TeamColor.WHITE ? 0 : 1,
                 gameData.whiteUsername(),
                 gameData.blackUsername(),
+                gameData.gameOver(),
                 gameData.gameID()
         );
 
@@ -77,6 +79,7 @@ public class SQLGameDAO implements GameDAO {
             ChessGame.deserialize(
                     rs.getString(3),
                     ChessGame.TeamColor.values()[rs.getInt(4)]
-            )
+            ),
+            rs.getBoolean(7)
     );
 }

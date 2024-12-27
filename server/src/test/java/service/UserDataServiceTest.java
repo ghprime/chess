@@ -2,6 +2,7 @@ package service;
 
 import dataaccess.DAOManager;
 import dataaccess.exception.AlreadyTakenException;
+import dataaccess.exception.DataAccessException;
 import models.AuthData;
 import models.UserData;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,7 @@ class UserDataServiceTest {
   AuthData authData;
 
   @BeforeEach
-  void prepTest() throws Exception {
+  void prepTest() throws DataAccessException {
     userData = new UserData(
             "username",
             "password",
@@ -24,10 +25,6 @@ class UserDataServiceTest {
     );
     authData = new AuthData(userData.username());
     dao = PrepareTest.prepareTest();
-    if (dao == null) {
-      throw new Exception("DAO could not initialize");
-    }
-
     registerService = new RegisterService(dao.getUserDAO(), dao.getAuthDAO());
   }
 

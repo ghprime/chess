@@ -12,7 +12,7 @@ public class ServiceUtils {
         ServiceUtils.authDAO = authDAO;
     }
 
-    public static AuthData verifyAuthData(AuthData authData) throws DataAccessException {
+    public static AuthData validateAuthToken(AuthData authData) throws DataAccessException {
         if (ServiceUtils.authDAO == null) {
             throw new DataAccessException("Service not initialized!");
         }
