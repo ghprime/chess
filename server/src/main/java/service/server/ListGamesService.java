@@ -1,4 +1,4 @@
-package service;
+package service.server;
 
 import dataaccess.exception.DataAccessException;
 import dataaccess.daointerface.GameDAO;

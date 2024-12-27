@@ -1,4 +1,4 @@
-package service;
+package service.server;
 
 import dataaccess.daointerface.AuthDAO;
 import dataaccess.exception.AlreadyTakenException;

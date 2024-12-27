@@ -8,6 +8,8 @@ import models.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mindrot.jbcrypt.BCrypt;
+import service.server.LoginService;
+import service.server.LogoutService;
 
 import static org.junit.jupiter.api.Assertions.*;
 

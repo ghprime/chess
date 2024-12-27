@@ -1,5 +1,6 @@
 package service.websocket;
 
+import dataaccess.daointerface.GameDAO;
 import dataaccess.exception.BadRequestException;
 import dataaccess.exception.DataAccessException;
 import models.AuthData;
@@ -10,26 +11,23 @@ import websocket.commands.ConnectObserverCommand;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 
-import static service.websocket.WebsocketServiceUtils.getGame;
-import static service.websocket.WebsocketServiceUtils.validateAuthToken;
-
 public class ConnectObserverService {
     private final ConnectionManager conns;
+    private final GameDAO gameDAO;
 
-    public ConnectObserverService(ConnectionManager conns) {
+    public ConnectObserverService(ConnectionManager conns, GameDAO gameDAO) {
         this.conns = conns;
+        this.gameDAO = gameDAO;
     }
 
     public void connectObserver(Session session, ConnectObserverCommand command) throws DataAccessException {
-        AuthData authData = validateAuthToken(command.getAuthToken());
-
-        GameData game = getGame(command.getGameID());
+        GameData game = gameDAO.getGameData(command.getGameID());
 
         if (game == null) {
             throw new BadRequestException();
         }
 
-        this.conns.addConnection(command, session);
+        AuthData authData = this.conns.addConnection(command, session);
 
         this.conns.broadcastMessage(command, new NotificationMessage(String.format("%s is now observing the game", authData.username())));
 

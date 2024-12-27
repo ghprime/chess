@@ -9,7 +9,7 @@ import dataaccess.exception.UnauthorizedException;
 import dataaccess.sql.SQLDAOManager;
 import models.*;
 import server.websocket.WebsocketHandler;
-import service.*;
+import service.server.*;
 import spark.*;
 import com.google.gson.Gson;
 

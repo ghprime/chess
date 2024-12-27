@@ -8,8 +8,6 @@ import server.websocket.ConnectionManager;
 import websocket.commands.ResignCommand;
 import websocket.messages.NotificationMessage;
 
-import static service.websocket.WebsocketServiceUtils.validateAuthToken;
-
 public class ResignService {
     private final ConnectionManager conns;
     private final GameDAO gameDAO;
@@ -20,7 +18,7 @@ public class ResignService {
     }
 
     public void resign(ResignCommand command) throws DataAccessException {
-        AuthData authData = validateAuthToken(command.getAuthToken());
+        AuthData authData = conns.validateAuthToken(command.getAuthToken());
 
         GameData game = gameDAO.getGameData(command.getGameID());
 

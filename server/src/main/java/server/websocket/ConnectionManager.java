@@ -1,7 +1,10 @@
 package server.websocket;
 
 import com.google.gson.Gson;
+import dataaccess.daointerface.AuthDAO;
 import dataaccess.exception.DataAccessException;
+import dataaccess.exception.UnauthorizedException;
+import models.AuthData;
 import org.eclipse.jetty.websocket.api.Session;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
@@ -13,30 +16,32 @@ import java.util.Map;
 
 public class ConnectionManager {
     private final Map<Integer, Map<String, Session>> connections = new HashMap<>();
+    private final Map<String, AuthData> authDataMap = new HashMap<>();
     private final Gson gson = new Gson();
+    private final AuthDAO authDAO;
 
-    private static ConnectionManager instance;
-
-    public static ConnectionManager getInstance() {
-        if (instance == null) instance = new ConnectionManager();
-        return instance;
+    public ConnectionManager(AuthDAO authDAO) {
+        this.authDAO = authDAO;
     }
 
-    public ConnectionManager() {
-        if (instance == null) {
-            instance = this;
+    public AuthData addConnection(UserGameCommand command, Session session) throws DataAccessException {
+        return addConnection(command.getGameID(), command.getAuthToken(), session);
+    }
+
+    public AuthData addConnection(int gameID, String authToken, Session session) throws DataAccessException {
+        AuthData authData = authDAO.getAuthData(authToken);
+
+        if (authData == null) {
+            throw new UnauthorizedException();
         }
-    }
 
-    public void addConnection(UserGameCommand command, Session session) {
-        addConnection(command.getGameID(), command.getAuthToken(), session);
-    }
-
-    public void addConnection(int gameID, String authToken, Session session) {
         if (!connections.containsKey(gameID)) {
             connections.put(gameID, new HashMap<>());
         }
         connections.get(gameID).put(authToken, session);
+        authDataMap.put(authToken, authData);
+
+        return authData;
     }
 
     public void removeConnection(UserGameCommand command) {
@@ -45,7 +50,10 @@ public class ConnectionManager {
 
     public void removeConnection(int gameID, String authToken) {
         connections.get(gameID).remove(authToken);
-        if (connections.get(gameID).isEmpty()) connections.remove(gameID);
+        if (connections.get(gameID).isEmpty()) {
+            connections.remove(gameID);
+        }
+        authDataMap.remove(authToken);
     }
 
     /**
@@ -95,5 +103,15 @@ public class ConnectionManager {
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage());
         }
+    }
+
+    public AuthData validateAuthToken(String authToken) throws UnauthorizedException {
+        AuthData authData = authDataMap.get(authToken);
+
+        if (authData == null) {
+            throw new UnauthorizedException();
+        }
+
+        return authData;
     }
 }

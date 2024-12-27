@@ -1,4 +1,4 @@
-package service;
+package service.server;
 
 import chess.ChessGame;
 import dataaccess.exception.AlreadyTakenException;

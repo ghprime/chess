@@ -13,9 +13,6 @@ import websocket.commands.ConnectPlayerCommand;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationMessage;
 
-import static service.websocket.WebsocketServiceUtils.getGame;
-import static service.websocket.WebsocketServiceUtils.validateAuthToken;
-
 public class ConnectPlayerService {
     private final ConnectionManager conns;
     private final GameDAO gameDAO;
@@ -26,13 +23,14 @@ public class ConnectPlayerService {
     }
 
     public void connectPlayer(Session session, ConnectPlayerCommand command) throws DataAccessException {
-        AuthData authData = validateAuthToken(command.getAuthToken());
-
-        GameData game = getGame(command.getGameID());
+        GameData game = gameDAO.getGameData(command.getGameID());
 
         if (command.getPlayerColor() == null) {
             throw new BadRequestException();
         }
+
+        AuthData authData = this.conns.addConnection(command, session);
+
 
         GameData updatedGame;
         String color;
@@ -72,8 +70,6 @@ public class ConnectPlayerService {
         }
 
         gameDAO.updateGameData(updatedGame);
-
-        this.conns.addConnection(command, session);
 
         this.conns.broadcastMessage(command, new NotificationMessage(
                 String.format(

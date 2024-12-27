@@ -2,8 +2,6 @@ package server.websocket;
 
 import com.google.gson.Gson;
 import dataaccess.DAOManager;
-import dataaccess.daointerface.AuthDAO;
-import dataaccess.daointerface.GameDAO;
 import dataaccess.exception.DataAccessException;
 import dataaccess.sql.SQLDAOManager;
 import org.eclipse.jetty.websocket.api.Session;
@@ -12,8 +10,6 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import service.websocket.*;
 import websocket.commands.*;
 import websocket.messages.ErrorMessage;
-
-import java.io.IOException;
 
 @WebSocket
 public class WebsocketHandler {
@@ -25,14 +21,13 @@ public class WebsocketHandler {
     ResignService resignService;
 
     public WebsocketHandler() {
-        this.conns = ConnectionManager.getInstance();
         DAOManager manager = SQLDAOManager.getInstance();
-        this.connectObserverService = new ConnectObserverService(conns);
+        this.conns = new ConnectionManager(manager.getAuthDAO());
+        this.connectObserverService = new ConnectObserverService(conns, manager.getGameDAO());
         this.connectPlayerService = new ConnectPlayerService(conns, manager.getGameDAO());
         this.leaveService = new LeaveService(conns, manager.getGameDAO());
         this.makeMoveService = new MakeMoveService(conns, manager.getGameDAO());
         this.resignService = new ResignService(conns, manager.getGameDAO());
-        WebsocketServiceUtils.setDAOs(manager.getAuthDAO(), manager.getGameDAO());
     }
 
     @OnWebSocketMessage
