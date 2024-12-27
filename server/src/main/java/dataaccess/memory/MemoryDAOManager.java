@@ -11,10 +11,20 @@ public class MemoryDAOManager implements DAOManager {
     private AuthDAO authDAO = null;
     private GameDAO gameDAO = null;
 
+    private static MemoryDAOManager instance = null;
+
+    public static DAOManager getInstance() {
+        return instance;
+    }
+
     public MemoryDAOManager() {
         userDAO = new MemoryUserDAO();
         authDAO = new MemoryAuthDAO();
         gameDAO = new MemoryGameDAO();
+
+        if (instance == null) {
+            instance = this;
+        }
     }
 
     @Override

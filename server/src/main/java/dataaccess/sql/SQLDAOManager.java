@@ -14,6 +14,12 @@ public class SQLDAOManager implements DAOManager {
     private final AuthDAO authDAO;
     private final GameDAO gameDAO;
 
+    private static SQLDAOManager instance = null;
+
+    public static DAOManager getInstance() {
+        return instance;
+    }
+
     public SQLDAOManager() throws DataAccessException {
         DatabaseManager.createDatabase();
 
@@ -30,6 +36,10 @@ public class SQLDAOManager implements DAOManager {
         userDAO = new SQLUserDAO();
         authDAO = new SQLAuthDAO();
         gameDAO = new SQLGameDAO();
+
+        if (instance == null) {
+            instance = this;
+        }
     }
 
     private final String[] createStatements={

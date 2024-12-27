@@ -8,6 +8,7 @@ import dataaccess.exception.DataAccessException;
 import dataaccess.exception.UnauthorizedException;
 import dataaccess.sql.SQLDAOManager;
 import models.*;
+import server.websocket.WebsocketHandler;
 import service.*;
 import spark.*;
 import com.google.gson.Gson;
@@ -28,9 +29,11 @@ public class Server {
     Gson gson = new Gson();
 
     public int run(int desiredPort) {
-        Spark.port(desiredPort);
+        port(desiredPort);
 
-        Spark.staticFiles.location("web");
+        staticFiles.location("web");
+
+        webSocket("/ws", WebsocketHandler.class);
 
         try {
             daoManager = new SQLDAOManager();
@@ -49,7 +52,6 @@ public class Server {
         }
 
         exception(DataAccessException.class, this::databaseErrorHandler);
-        exception(BadRequestException.class, this::badRequestErrorHandler);
         exception(Exception.class, this::errorHandler);
 
         post("/user", this::registerUser);
@@ -63,14 +65,14 @@ public class Server {
 
         delete("/db", this::clear);
 
-        Spark.awaitInitialization();
+        awaitInitialization();
 
-        return Spark.port();
+        return port();
     }
 
     public void stop() {
         Spark.stop();
-        Spark.awaitStop();
+        awaitStop();
     }
 
     private Object registerUser(Request req, Response res) throws BadRequestException, DataAccessException {
@@ -216,14 +218,6 @@ public class Server {
         return body;
     }
 
-    private Object badRequestErrorHandler(BadRequestException err, Request req, Response res) {
-        String body = getJSONError(err.getMessage());
-        res.type("application/json");
-        res.body(body);
-        res.status(400);
-        return body;
-    }
-
     private Object databaseErrorHandler(DataAccessException err, Request req, Response res) {
         int status;
         var body=getJSONError(err.getMessage());
@@ -232,6 +226,8 @@ public class Server {
             status = 401;
         } else if (err instanceof AlreadyTakenException) {
             status = 403;
+        } else if (err instanceof BadRequestException) {
+            status = 400;
         } else {
             status = 400;
         }
