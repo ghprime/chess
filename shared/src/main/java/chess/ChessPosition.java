@@ -52,6 +52,6 @@ public class ChessPosition {
 
     @Override
     public String toString() {
-        return "(" + FILE_NAMES[column - 1] + ',' + RANK_NAMES[row - 1] + ')';
+        return "(" + FILE_NAMES[column - 1] + RANK_NAMES[row - 1] + ')';
     }
 }

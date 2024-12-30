@@ -101,7 +101,11 @@ public class ServerFacade {
     return (HttpURLConnection) url.openConnection();
   }
 
-  private URL getURL(String path) throws ClientException {
+  public URL getURL() throws ClientException {
+    return getURL(null);
+  }
+
+  public URL getURL(String path) throws ClientException {
     try {
       return new URI("http://" + urlString + ":" + port + (path == null ? "" : ("/" + path))).toURL();
     } catch (URISyntaxException | MalformedURLException ex) {
@@ -120,7 +124,6 @@ public class ServerFacade {
       throw new ClientException(400, ex.getMessage());
     }
   }
-
 
   private <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
     try {

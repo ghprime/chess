@@ -1,28 +1,31 @@
 package ui;
 
+import serverfacade.NotificationHandler;
+
 import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
 
-public class Repl {
+public class Repl implements NotificationHandler {
   private final ChessClient client;
+  private final Scanner scanner;
 
   public Repl() {
-    this.client=new ChessClient();
+    scanner=new Scanner(System.in);
+    this.client=new ChessClient(this);
   }
 
   public void run() {
     System.out.println("Welcome to chess! Log in to start.");
     System.out.println(client.help());
 
-    var scanner=new Scanner(System.in);
     var result="";
     while (!result.equals("quit")) {
       printPrompt();
-      String line=scanner.nextLine();
+      String line = scanner.nextLine();
 
       if (line.isEmpty()) {
-        line="clear;register user pass email;create game;list";
+        line = "clear;register user pass email;create game;list";
       }
 
       var inputs=line.split(";");
@@ -39,17 +42,29 @@ public class Repl {
   }
 
   private void printPrompt() {
-    var color=switch (client.getState()) {
+    String color = switch (client.getState()) {
       case SIGNED_OUT -> SET_TEXT_COLOR_RED;
       default -> SET_TEXT_COLOR_GREEN;
     };
-    var status=switch (client.getState()) {
+    String status = switch (client.getState()) {
       case SIGNED_OUT -> "LOGGED OUT";
       case SIGNED_IN -> "LOGGED IN";
       case IN_GAME -> "IN GAME";
       case OBSERVING -> "OBSERVING";
     };
-    var fullStatus=color + "[" + status + "]";
+    String fullStatus = color + "[" + status + "]";
     System.out.print("\n" + RESET + fullStatus + RESET + " >>> " + SET_TEXT_COLOR_BLUE);
+  }
+
+  @Override
+  public void notify(String message) {
+    System.out.println(RESET + "\n" + SET_TEXT_COLOR_YELLOW + message + RESET);
+    printPrompt();
+  }
+
+  @Override
+  public void error(String error) {
+    System.out.println(RESET + "\n" + SET_TEXT_COLOR_RED + error + RESET);
+    printPrompt();
   }
 }

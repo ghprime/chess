@@ -2,8 +2,10 @@ package ui;
 
 import chess.*;
 import models.AuthData;
-import models.UserData;
+import serverfacade.NotificationHandler;
 import serverfacade.ServerFacade;
+import serverfacade.WebsocketFacade;
+import ui.clients.*;
 
 import java.util.*;
 
@@ -11,17 +13,77 @@ import static ui.EscapeSequences.*;
 
 public class ChessClient {
   private final ServerFacade server;
-  private final HashMap<Integer, Integer> gameIDs;
+  private WebsocketFacade ws;
   private State state;
   private AuthData authData;
   private ChessGame currentGame;
   private ChessGame.TeamColor teamColor;
+  private final NotificationHandler notificationHandler;
   private int gameID;
 
-  public ChessClient() {
+  private Evaluator evaluator;
+
+  public ChessClient(NotificationHandler notificationHandler) {
     server=new ServerFacade();
     state=State.SIGNED_OUT;
-    gameIDs=new HashMap<>();
+    this.notificationHandler = notificationHandler;
+
+    this.evaluator = new SignedOutEvaluator(this);
+  }
+
+  public void setAuthData(AuthData authData) {
+    this.authData = authData;
+  }
+
+  public AuthData getAuthData() {
+    return authData;
+  }
+
+  public void setGameID(int gameID) {
+    this.gameID = gameID;
+  }
+
+  public void setTeamColor(ChessGame.TeamColor teamColor) {
+    this.teamColor = teamColor;
+  }
+
+  public ChessGame.TeamColor getTeamColor() {
+    return teamColor;
+  }
+
+  public void setCurrentGame(ChessGame game) {
+    currentGame = game;
+  }
+
+  public ChessGame getCurrentGame() {
+    return currentGame;
+  }
+
+  public void setState(State state) {
+    this.state = state;
+
+    this.evaluator = switch (state) {
+        case SIGNED_OUT -> new SignedOutEvaluator(this);
+        case SIGNED_IN -> new SignedInEvaluator(this);
+        case IN_GAME -> new InGameEvaluator(this);
+        case OBSERVING -> new ObservingEvaluator(this);
+    };
+  }
+
+  public ServerFacade getServer() {
+    return server;
+  }
+
+  public WebsocketFacade getWs() {
+    return ws;
+  }
+
+  public void openWs() throws ClientException {
+    ws = new WebsocketFacade(server.getURL().toString(), notificationHandler, authData, gameID, this);
+  }
+
+  public void closeWs() {
+    this.ws = null;
   }
 
   public State getState() {
@@ -37,267 +99,35 @@ public class ChessClient {
 
     var params=Arrays.copyOfRange(inputs, 1, inputs.length);
 
-    return switch (inputs[0]) {
-      case "register" -> register(params);
-      case "login" -> login(params);
-      case "logout" -> logout();
-      case "list" -> listGames();
-      case "create" -> createGame(params);
-      case "join" -> joinGame(params);
-      case "observe" -> observeGame(params);
-      case "help" -> help();
-      case "clear" -> clear();
-      case "redraw" -> redraw();
-      case "resign" -> resign();
-      case "leave" -> leave();
-      case "move" -> move(params);
-      case "highlight" -> highlight(params);
-      case "quit" -> quit();
+    String output = switch (inputs[0]) {
+      case "help" -> evaluator.help();
       case "info" -> info();
-      default -> "Unknown command. Type 'help' to see all commands.";
+      default -> null;
     };
+
+    if (output == null) {
+      output = evaluator.eval(inputs[0], params);
+    }
+
+    if (output == null) {
+      output = "Unknown command. Type 'help' to see all commands.";
+    }
+
+    return output;
   }
 
-  private String info() throws ClientException {
+  private String info() {
     return "info";
   }
 
-  private String quit() throws ClientException {
-    return "quit";
+  public String displayGame(ChessGame game) {
+    this.currentGame = game;
+    return this.displayBoard(game.getBoard(), this.teamColor);
   }
 
-  private String register(String... params) throws ClientException {
-    if (params.length != 3) {
-      throw new ClientException(400, "Expected: <username> <password> <email>");
-    }
-
-    authData =server.registerUser(new UserData(params[0], params[1], params[2]));
-    state=State.SIGNED_IN;
-    return "Successfully registered and logged in!";
-  }
-
-  private String login(String... params) throws ClientException {
-    if (params.length != 2) {
-      throw new ClientException(400, "Expected: <username> <password>");
-    }
-
-    authData =server.login(new UserData(params[0], params[1]));
-    state=State.SIGNED_IN;
-    return "Successfully logged in!";
-  }
-
-  private String logout() throws ClientException {
-    assertSignedIn();
-
-    server.logout(authData);
-    state=State.SIGNED_OUT;
-    return "Successfully logged out!";
-  }
-
-  private String listGames() throws ClientException {
-    assertSignedIn();
-    var games=server.listGames(authData);
-    gameIDs.clear();
-
-    if (games.isEmpty()) {
-      return "No games.";
-    }
-
-    var sb=new StringBuilder();
-
-    var index=0;
-
-    for (var game : games) {
-      sb.append(++index);
-      sb.append(") Name: '");
-      sb.append(game.gameName());
-      sb.append("'; White player: ");
-      if (game.whiteUsername() != null) {
-        sb.append("'").append(game.whiteUsername()).append("'");
-      }
-      else {
-        sb.append("Empty");
-      }
-      sb.append("; Black player: ");
-      if (game.blackUsername() != null) {
-        sb.append("'").append(game.blackUsername()).append("'");
-      }
-      else {
-        sb.append("Empty");
-      }
-      sb.append(";");
-      if (index != games.size()) {
-        sb.append("\n");
-      }
-      gameIDs.put(index, game.gameID());
-    }
-
-    return sb.toString();
-  }
-
-  private String clear() throws ClientException {
-    server.clear();
-    return "Successfully cleared the database!";
-  }
-
-  private String createGame(String... params) throws ClientException {
-    assertSignedIn();
-
-    if (params.length == 0) {
-      throw new ClientException(400, "Expected: create <gameName>");
-    }
-
-    server.createGame(authData, params[0]);
-    return "Successfully created game!";
-  }
-
-  private String joinGame(String... params) throws ClientException {
-    assertSignedIn();
-
-    if (params.length != 2) {
-      throw new ClientException(400, "Expected: <gameID> <BLACK/WHITE>");
-    }
-
-    var id=Integer.parseInt(params[0]);
-
-    if (!gameIDs.containsKey(id)) {
-      throw new ClientException(400, "No such game!");
-    }
-
-    gameID=gameIDs.get(id);
-
-    server.joinGame(authData, gameID, params[1]);
-    teamColor="BLACK".equals(params[1]) ? ChessGame.TeamColor.BLACK : ChessGame.TeamColor.WHITE;
-
-    state=State.IN_GAME;
-
-    currentGame=new ChessGame();
-    var board=currentGame.getBoard();
-    board.resetBoard();
-
-    return "Successfully joined game!\n" + redraw();
-  }
-
-  private String observeGame(String... params) throws ClientException {
-    assertSignedIn();
-
-    if (params.length != 1) {
-      throw new ClientException(400, "Expected: <gameID>");
-    }
-
-    var id=Integer.parseInt(params[0]);
-
-    if (!gameIDs.containsKey(id)) {
-      throw new ClientException(400, "No such game!");
-    }
-
-    gameID=gameIDs.get(id);
-
-    server.joinGame(authData, gameID, "OBSERVER");
-
-    state=State.OBSERVING;
-
-    currentGame=new ChessGame();
-    var board=currentGame.getBoard();
-    board.resetBoard();
-
-    return "Successfully joined game!\n" + redraw();
-  }
-
-  private String resign() throws ClientException {
-    assertInGame();
-
-    state=State.SIGNED_IN;
-    currentGame=null;
-    teamColor=null;
-
-    return "Successfully resigned!";
-  }
-
-  private String leave() throws ClientException {
-    assertInGameOrObserving();
-
-    state=State.SIGNED_IN;
-    currentGame=null;
-    teamColor=null;
-
-    return "Successfully left the game!";
-  }
-
-  private String move(String... params) throws ClientException {
-    assertInGame();
-
-    if (params.length != 2) {
-      throw new ClientException(400, "Expected: <file><rank> <file><rank>");
-    }
-
-    var from=params[0].toLowerCase();
-    var to=params[1].toLowerCase();
-
-    if (from.length() != 2 || to.length() != 2) {
-      throw new ClientException(400, "Expected: <file><rank> <file><rank>");
-    }
-
-    var positions=new ChessPosition[]{null, null};
-
-    var index=0;
-
-    for (var pos : new String[]{from, to}) {
-      var file=pos.charAt(0);
-      var rank=pos.charAt(1);
-
-      if (file < 97 || file > 104 || rank < 49 || rank > 56) {
-        throw new ClientException(400, "Expected: <[a-h]><[1-8]> <[a-h]><[1-8]>");
-      }
-
-      positions[index++]=new ChessPosition(rank - 48, file - 96);
-    }
-
-    try {
-      var piece=currentGame.getBoard().getPiece(positions[0]);
-
-      if (piece != null && (piece.getTeamColor() != teamColor)) {
-        throw new ClientException(400, "Wrong team piece!");
-      }
-
-      var move=new ChessMove(positions[0], positions[1]);
-
-      currentGame.makeMove(move);
-      return "Successfully moved!";
-    } catch (InvalidMoveException ex) {
-      var message= !ex.getMessage().isEmpty() ? ex.getMessage() : "Invalid move!";
-      throw new ClientException(400, message);
-    }
-  }
-
-  private String highlight(String... params) throws ClientException {
-    assertInGameOrObserving();
-
-    if (params.length != 1 || params[0].length() != 2) {
-      throw new ClientException(400, "Expected: <file><rank>");
-    }
-
-    var file=params[0].charAt(0);
-    var rank=params[0].charAt(1);
-
-    if (file < 97 || file > 104 || rank < 49 || rank > 56) {
-      throw new ClientException(400, "Expected: <[a-h]><[1-8]> <[a-h]><[1-8]>");
-    }
-
-    var position=new ChessPosition(rank - 48, file - 96);
-
-    var piece=currentGame.getBoard().getPiece(position);
-    if (piece == null) {
-      throw new ClientException(400, "Not a piece!");
-    }
-
-    return displayBoard(currentGame.getBoard(), teamColor, position);
-  }
-
-  private String redraw() throws ClientException {
-    assertInGameOrObserving();
-
-    return displayBoard(currentGame.getBoard(), teamColor);
+  public String displayGame(ChessGame game, ChessPosition pieceMovesToHighlight) {
+    this.currentGame = game;
+    return displayBoard(game.getBoard(), teamColor, pieceMovesToHighlight);
   }
 
   private String displayBoard(ChessBoard board, ChessGame.TeamColor perspective) {
@@ -418,55 +248,6 @@ public class ChessClient {
   }
 
   public String help() {
-    return switch (state) {
-      case SIGNED_IN -> """
-              - help
-              - logout
-              - create <gameName>
-              - join <gameID> <BLACK/WHITE>
-              - observe <gameID>
-              - list
-              - quit
-              """;
-      case SIGNED_OUT -> """
-              - help
-              - login <username> <password>
-              - register <username> <password> <email>
-              - quit
-              """;
-      case IN_GAME -> """
-              - help
-              - redraw
-              - leave
-              - move <file><rank> <file><rank>
-              - resign
-              - highlight <file><rank>
-              """;
-      case OBSERVING -> """
-              - help
-              - redraw
-              - leave
-              - highlight <file><rank>
-              """;
-      default -> "Unknown state";
-    };
-  }
-
-  private void assertSignedIn() throws ClientException {
-    if (state != State.SIGNED_IN) {
-      throw new ClientException(400, "Not signed in!");
-    }
-  }
-
-  private void assertInGame() throws ClientException {
-    if (state != State.IN_GAME) {
-      throw new ClientException(400, "Not playing in game!");
-    }
-  }
-
-  private void assertInGameOrObserving() throws ClientException {
-    if (state != State.OBSERVING && state != State.IN_GAME) {
-      throw new ClientException(400, "Not in game!");
-    }
+    return evaluator.help();
   }
 }

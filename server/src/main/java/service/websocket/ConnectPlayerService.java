@@ -2,7 +2,6 @@ package service.websocket;
 
 import chess.ChessGame;
 import dataaccess.daointerface.GameDAO;
-import dataaccess.exception.AlreadyTakenException;
 import dataaccess.exception.BadRequestException;
 import dataaccess.exception.DataAccessException;
 import models.AuthData;
@@ -31,45 +30,26 @@ public class ConnectPlayerService {
 
         AuthData authData = this.conns.addConnection(command, session);
 
-
-        GameData updatedGame;
         String color;
+        String existingPlayer;
 
         if (command.getPlayerColor() == ChessGame.TeamColor.WHITE) {
-            if (game.whiteUsername() != null) {
-                throw new AlreadyTakenException("Player WHITE already filled!");
-            }
-
-            updatedGame = new GameData(
-                    game.gameID(),
-                    authData.username(),
-                    game.blackUsername(),
-                    game.gameName(),
-                    game.game(),
-                    game.gameOver()
-            );
-
+            existingPlayer = game.whiteUsername();
             color = "WHITE";
         } else if (command.getPlayerColor() == ChessGame.TeamColor.BLACK) {
-            if (game.blackUsername() != null) {
-                throw new AlreadyTakenException("Player BLACK already filled!");
-            }
-
-            updatedGame = new GameData(
-                    game.gameID(),
-                    game.whiteUsername(),
-                    authData.username(),
-                    game.gameName(),
-                    game.game(),
-                    game.gameOver()
-            );
-
+            existingPlayer = game.blackUsername();
             color = "BLACK";
         } else {
             throw new DataAccessException("Invalid player color!");
         }
 
-        gameDAO.updateGameData(updatedGame);
+        if (existingPlayer == null) {
+            throw new DataAccessException("Must join before connecting!");
+        }
+
+        if (!authData.username().equals(existingPlayer)) {
+            throw new DataAccessException(String.format("Cannot join: %s already filled!", color));
+        }
 
         this.conns.broadcastMessage(command, new NotificationMessage(
                 String.format(
@@ -79,6 +59,6 @@ public class ConnectPlayerService {
                 )
         );
 
-        this.conns.sendMessage(command, new LoadGameMessage(updatedGame.game()));
+        this.conns.sendMessage(command, new LoadGameMessage(game.game()));
     }
 }
