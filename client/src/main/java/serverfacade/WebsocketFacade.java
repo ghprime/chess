@@ -23,7 +23,13 @@ public class WebsocketFacade extends Endpoint {
   NotificationHandler notificationHandler;
   UserMessageFactory messageFactory;
 
-  public WebsocketFacade(String url, NotificationHandler notificationHandler, AuthData authData, int gameID, ChessClient client) throws ClientException {
+  public WebsocketFacade(
+          String url,
+          NotificationHandler notificationHandler,
+          AuthData authData,
+          int gameID,
+          ChessClient client
+  ) throws ClientException {
     try {
       url=url.replace("http", "ws");
       var socketURI=new URI(url + "/ws");
