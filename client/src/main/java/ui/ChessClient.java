@@ -82,7 +82,10 @@ public class ChessClient {
     ws = new WebsocketFacade(server.getURL().toString(), notificationHandler, authData, gameID, this);
   }
 
-  public void closeWs() {
+  public void closeWs() throws ClientException {
+    if (ws != null) {
+      ws.close();
+    }
     this.ws = null;
   }
 
